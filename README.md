@@ -9,7 +9,7 @@ Built by [Mikaela Johansson](https://mikaelajohansson.com) as a focused, finishe
 ## How it plays
 
 1. A country's silhouette appears, shown on its own projection so the shape isn't stretched and its position gives nothing away.
-2. Spin the globe and drop a pin where you think it is.
+2. Spin and zoom the globe (drag, scroll, pinch, the + and − buttons, or the keyboard) and drop a pin where you think it is.
 3. An arc flies from your pin to the answer, the country lights up, and the distance and points count up.
 4. After five rounds you get your total and a row of 🟩🟨🟥 to share.
 
@@ -24,7 +24,8 @@ Accessibility is a core part of how I work (I'm CPACC certified), so it's built 
 - **Focus moves to where you act next:** the globe at the start of a round, "Next round" after a guess, the score at the end.
 - **Respects "reduce motion":** no idle spin, no camera easing, the arc and numbers appear at their final state.
 - **Sound** is short synthesised tones that only play after you do something, with an on/off toggle that's remembered.
-- **Contrast** meets WCAG AA, and buttons are at least 44 px tall.
+- **Zoom without a scroll wheel:** on-screen + and − buttons (named "Zoom in" and "Zoom out" for screen readers, disabled at the limits), pinch on touch screens, and + / − on the keyboard.
+- **Contrast** meets WCAG AA, and buttons are at least 44 px tall. The header and buttons have their own background, so they stay readable over light land when zoomed in.
 
 What it doesn't do: the game is about recognising a *visual* shape, so it isn't playable without sight. The silhouette has a text label, but describing the outline would give the answer away. That's a limit of the concept, not something I'd want to paper over.
 
@@ -50,7 +51,9 @@ Some decisions worth explaining:
 
 - **The camera orbits; the globe never rotates.** A point on the globe's surface then converts straight to latitude and longitude, and the camera is fully described by four numbers (lat, lon, distance, field of view).
 - **Picking is plain geometry.** Because the camera is just those numbers, finding the point under the pointer is a ray from the camera intersected with a unit sphere (`pickOnGlobe` in `view.ts`), instead of relying on three.js pointer events. It's easy to test and reason about.
-- **The globe texture is drawn once** from the GeoJSON onto a 4096 × 2048 canvas with d3-geo's equirectangular projection, which maps directly onto a three.js sphere. The answer highlight is a second, transparent texture drawn per round.
+- **The globe texture is drawn once** from the GeoJSON onto a canvas with d3-geo's equirectangular projection, which maps directly onto a three.js sphere: 8192 px wide where the graphics card and screen allow, 4096 on phones. The answer highlight is a second, transparent texture drawn per round.
+- **Borders are real 3D lines, not part of the texture.** Painted into the image they got thick and blurry when zoomed in; as line geometry the GPU draws them 1 px wide at any zoom. The globe surface uses a small polygon offset so the lines just above it don't flicker.
+- **Zoom is proportional:** each step multiplies the camera's height above the surface, so it feels the same far out and close in. Pins shrink as you zoom so they don't cover small countries.
 - **The daily challenge** uses a seeded random number generator keyed on the date, so everyone gets the same five countries without a server.
 - **Disputed areas** that the data draws as separate shapes (Western Sahara, Somaliland, Northern Cyprus) are shown on the map but never asked about, so the game doesn't take a side.
 
@@ -59,7 +62,6 @@ Some decisions worth explaining:
 - A small backend for a daily leaderboard (a serverless function and a tiny database)
 - Difficulty levels, e.g. continents first, small countries later
 - Load the map data separately to shrink the initial bundle (it's most of the 575 kB gzipped)
-- Touch-specific polish: pinch to zoom
 - Tests for the geo maths (distance to border, picking)
 
 ## How I used AI

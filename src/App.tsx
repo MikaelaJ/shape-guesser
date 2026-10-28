@@ -24,7 +24,15 @@ import { Globe } from './Globe'
 import { useCountUp, useReducedMotion, useStoredBoolean } from './hooks'
 import { Silhouette } from './Silhouette'
 import { sounds } from './sound'
-import { MAX_DIST, MIN_DIST, clampLat, pickOnGlobe, type View } from './view'
+import {
+  MAX_DIST,
+  MIN_DIST,
+  ZOOM_STEP,
+  clampLat,
+  pickOnGlobe,
+  zoomBy,
+  type View,
+} from './view'
 
 type Phase = 'intro' | 'guessing' | 'reveal' | 'summary'
 type Result = { country: Country; guess: LatLon; nearest: LatLon; km: number; score: number }
@@ -33,6 +41,12 @@ const PORTFOLIO_URL = 'https://mikaelajohansson.com/'
 const GAME_URL = 'https://mikaelajohansson.com/shape-guesser/'
 
 const normaliseLon = (lon: number) => ((((lon + 180) % 360) + 360) % 360) - 180
+
+// Distance between the first two touch points, for pinch zoom
+function spread(pointers: Map<number, { x: number; y: number }>) {
+  const [a, b] = [...pointers.values()]
+  return a && b ? Math.hypot(a.x - b.x, a.y - b.y) : 0
+}
 const points = (n: number) => n.toLocaleString('en-GB')
 
 export default function App() {
@@ -174,10 +188,10 @@ export default function App() {
         break
       case '+':
       case '=':
-        v.targetDist = Math.max(MIN_DIST, v.targetDist - 0.3)
+        zoomBy(v, 1 / ZOOM_STEP)
         break
       case '-':
-        v.targetDist = Math.min(MAX_DIST, v.targetDist + 0.3)
+        zoomBy(v, ZOOM_STEP)
         break
       case ' ':
         placePin(centre())
@@ -191,29 +205,74 @@ export default function App() {
     event.preventDefault()
   }
 
-  // Drag to spin; a press that barely moves is a click, which drops a pin
-  // where the pointer is on the globe.
+  // Pointer gestures on the globe:
+  // - one pointer: drag to spin; a press that barely moves is a click,
+  //   which drops a pin where the pointer is
+  // - two pointers (touch): pinch to zoom
+  // Moves and releases are listened for on the window, so a drag keeps
+  // working when the pointer leaves the globe.
+  const gesture = useRef({
+    pointers: new Map<number, { x: number; y: number }>(),
+    startX: 0,
+    startY: 0,
+    pinched: false,
+    pinchSpread: 0,
+  })
+
   function onGlobePointerDown(event: PointerEvent<HTMLDivElement>) {
-    if (event.button !== 0) return
-    const rect = event.currentTarget.getBoundingClientRect()
-    const startX = event.clientX
-    const startY = event.clientY
-    let lastX = startX
-    let lastY = startY
+    if (event.pointerType === 'mouse' && event.button !== 0) return
+    const g = gesture.current
+    g.pointers.set(event.pointerId, { x: event.clientX, y: event.clientY })
+    if (g.pointers.size === 1) {
+      g.startX = event.clientX
+      g.startY = event.clientY
+      g.pinched = false
+    } else {
+      g.pinched = true
+      g.pinchSpread = spread(g.pointers)
+    }
     view.current.spin = false
+  }
+
+  // The window listeners outlive any single render, so they call the
+  // latest placePin through a ref
+  const placePinRef = useRef(placePin)
+  useEffect(() => {
+    placePinRef.current = placePin
+  })
+
+  useEffect(() => {
+    const g = gesture.current
     const move = (e: globalThis.PointerEvent) => {
+      const p = g.pointers.get(e.pointerId)
+      if (!p) return
       const v = view.current
+      const dx = e.clientX - p.x
+      const dy = e.clientY - p.y
+      p.x = e.clientX
+      p.y = e.clientY
+      if (g.pointers.size >= 2) {
+        const now = spread(g.pointers)
+        if (g.pinchSpread > 0 && now > 0) zoomBy(v, g.pinchSpread / now)
+        g.pinchSpread = now
+        return
+      }
+      // Spin speed follows the zoom, so the map moves with the pointer
       const k = 0.2 * ((v.dist - 0.8) / 2.2)
-      v.targetLon -= (e.clientX - lastX) * k
-      v.targetLat = clampLat(v.targetLat + (e.clientY - lastY) * k)
-      lastX = e.clientX
-      lastY = e.clientY
+      v.targetLon -= dx * k
+      v.targetLat = clampLat(v.targetLat + dy * k)
     }
     const up = (e: globalThis.PointerEvent) => {
-      window.removeEventListener('pointermove', move)
-      window.removeEventListener('pointerup', up)
-      const moved = Math.hypot(e.clientX - startX, e.clientY - startY)
-      if (moved > 6 || phaseRef.current !== 'guessing') return
+      if (!g.pointers.delete(e.pointerId)) return
+      if (g.pointers.size > 0) {
+        g.pinchSpread = 0
+        return
+      }
+      if (e.type === 'pointercancel' || g.pinched) return
+      const moved = Math.hypot(e.clientX - g.startX, e.clientY - g.startY)
+      const globe = globeRef.current
+      if (moved > 6 || phaseRef.current !== 'guessing' || !globe) return
+      const rect = globe.getBoundingClientRect()
       const point = pickOnGlobe(
         view.current,
         e.clientX - rect.left,
@@ -221,16 +280,26 @@ export default function App() {
         rect.width,
         rect.height,
       )
-      if (point) placePin(point)
+      if (point) placePinRef.current(point)
     }
     window.addEventListener('pointermove', move)
     window.addEventListener('pointerup', up)
-  }
+    window.addEventListener('pointercancel', up)
+    return () => {
+      window.removeEventListener('pointermove', move)
+      window.removeEventListener('pointerup', up)
+      window.removeEventListener('pointercancel', up)
+    }
+  }, [])
 
   function onGlobeWheel(event: WheelEvent<HTMLDivElement>) {
-    const v = view.current
-    v.targetDist = Math.min(MAX_DIST, Math.max(MIN_DIST, v.targetDist + event.deltaY * 0.002))
+    // Trackpads send many small deltas, mouse wheels a few big ones;
+    // an exponential keeps both smooth
+    zoomBy(view.current, Math.exp(event.deltaY * 0.0015))
   }
+
+  const canZoomIn = (dist: number) => dist > MIN_DIST + 0.001
+  const canZoomOut = (dist: number) => dist < MAX_DIST - 0.001
 
   const reveal =
     phase === 'reveal' && lastResult
@@ -275,6 +344,8 @@ export default function App() {
         />
         {phase === 'guessing' && <div className="crosshair" aria-hidden="true" />}
       </div>
+
+      <ZoomButtons view={view} canZoomIn={canZoomIn} canZoomOut={canZoomOut} />
       <p id="globe-help" className="sr-only">
         Arrow keys spin the globe under the crosshair in the middle, hold Shift for bigger steps. Plus
         and minus zoom. Space drops a pin, Enter guesses.
@@ -299,8 +370,8 @@ export default function App() {
             <summary>How to play</summary>
             <ul>
               <li>
-                <strong>Mouse or touch:</strong> drag to spin, scroll to zoom, click to drop a pin,
-                then press Guess.
+                <strong>Mouse or touch:</strong> drag to spin, scroll, pinch or use the + and −
+                buttons to zoom, click to drop a pin, then press Guess.
               </li>
               <li>
                 <strong>Keyboard:</strong> arrow keys spin the globe under the crosshair, + and −
@@ -466,5 +537,48 @@ function SummaryPanel({
         </button>
       </div>
     </section>
+  )
+}
+
+// On-screen zoom buttons, for anyone without a scroll wheel or pinch.
+// Disabled at the zoom limits, which is checked a few times a second
+// because the distance lives in the per-frame view, not React state.
+function ZoomButtons({
+  view,
+  canZoomIn,
+  canZoomOut,
+}: {
+  view: RefObject<View>
+  canZoomIn: (dist: number) => boolean
+  canZoomOut: (dist: number) => boolean
+}) {
+  const [dist, setDist] = useState(view.current.targetDist)
+  useEffect(() => {
+    const timer = setInterval(() => setDist(view.current.targetDist), 200)
+    return () => clearInterval(timer)
+  }, [view])
+  const zoom = (factor: number) => {
+    zoomBy(view.current, factor)
+    setDist(view.current.targetDist)
+  }
+  return (
+    <div className="zoom" role="group" aria-label="Zoom">
+      <button
+        type="button"
+        aria-label="Zoom in"
+        disabled={!canZoomIn(dist)}
+        onClick={() => zoom(1 / ZOOM_STEP)}
+      >
+        <span aria-hidden="true">+</span>
+      </button>
+      <button
+        type="button"
+        aria-label="Zoom out"
+        disabled={!canZoomOut(dist)}
+        onClick={() => zoom(ZOOM_STEP)}
+      >
+        <span aria-hidden="true">−</span>
+      </button>
+    </div>
   )
 }
