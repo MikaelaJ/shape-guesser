@@ -28,6 +28,7 @@ Accessibility is a core part of how I work (I'm CPACC certified), so it's built 
 - **Respects "reduce motion":** no idle spin, no camera easing, the arc and numbers appear at their final state.
 - **The timer can be turned off.** A time limit you can't switch off fails WCAG 2.2.1 (Timing Adjustable), and not everyone can find a place in 60 seconds. With the timer off clues only come when you ask, and cost the same as waiting would have, so the score stays comparable. The timer also pauses when the tab is hidden.
 - **Clues are announced** to screen readers as they appear, along with a "10 seconds left" warning. C gives a clue from the keyboard.
+- **Music has its own on/off button**, separate from the sound effects (WCAG 1.4.2, Audio Control). It never starts on page load, only after you press Play or the Music button. It fades in and out, pauses when the tab is hidden, and is downloaded only once it first plays.
 - **Sound** is short synthesised tones that only play after you do something, with an on/off toggle that's remembered.
 - **Zoom without a scroll wheel:** on-screen + and − buttons (named "Zoom in" and "Zoom out" for screen readers, disabled at the limits), pinch on touch screens, and + / − on the keyboard.
 - **Contrast** meets WCAG AA, and buttons are at least 44 px tall. The header and buttons have their own background, so they stay readable over light land when zoomed in.

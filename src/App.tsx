@@ -35,6 +35,7 @@ import {
 import { Globe } from './Globe'
 import { useCountUp, useReducedMotion, useStoredBoolean } from './hooks'
 import { Silhouette } from './Silhouette'
+import { music } from './music'
 import { sounds } from './sound'
 import {
   MAX_DIST,
@@ -74,6 +75,17 @@ export default function App() {
   const reducedMotion = useReducedMotion()
   const [soundOn, setSoundOn] = useStoredBoolean('shape-guesser:sound', true)
   const [timerOn, setTimerOn] = useStoredBoolean('shape-guesser:timer', true)
+  const [musicOn, setMusicOn] = useStoredBoolean('shape-guesser:music', true)
+  // Music never starts by itself on page load, only once the player has
+  // pressed Play or the Music button
+  const [musicStarted, setMusicStarted] = useState(false)
+  useEffect(() => {
+    const update = () =>
+      musicOn && musicStarted && !document.hidden ? music.play() : music.pause(document.hidden)
+    update()
+    document.addEventListener('visibilitychange', update)
+    return () => document.removeEventListener('visibilitychange', update)
+  }, [musicOn, musicStarted])
   const view = useRef<View>({
     lat: 20,
     lon: 10,
@@ -138,6 +150,7 @@ export default function App() {
     `Round ${n} of ${ROUNDS}. Where is this shape? It's a country or a US state. Find it on the globe.`
 
   function start(isDaily: boolean) {
+    setMusicStarted(true)
     setDaily(isDaily)
     setRounds(pickPlaces(isDaily ? todayKey() : null))
     setRound(0)
@@ -434,6 +447,19 @@ export default function App() {
             onClick={() => setTimerOn(!timerOn)}
           >
             Timer {timerOn ? 'on' : 'off'}
+          </button>
+          {/* Music that plays for more than 3 seconds needs a way to stop
+              it (WCAG 1.4.2), separate from the sound effects */}
+          <button
+            type="button"
+            className="chip-button"
+            aria-pressed={musicOn}
+            onClick={() => {
+              setMusicOn(!musicOn)
+              setMusicStarted(true)
+            }}
+          >
+            Music {musicOn ? 'on' : 'off'}
           </button>
           <button
             type="button"
