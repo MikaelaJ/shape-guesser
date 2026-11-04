@@ -4,7 +4,16 @@ import { geoEquirectangular, geoGraticule10, geoPath } from 'd3-geo'
 import { useMemo, useRef, type ComponentRef, type RefObject } from 'react'
 import * as THREE from 'three'
 import type { Position } from 'geojson'
-import { arcPoints, countries, isState, stateBorders, toVector, type Place, type LatLon } from './geo'
+import {
+  arcPoints,
+  countries,
+  isState,
+  lakes,
+  stateBorders,
+  toVector,
+  type Place,
+  type LatLon,
+} from './geo'
 import { FOV, colors, type View } from './view'
 
 // Countries drawn onto an equirectangular canvas, which three.js wraps
@@ -42,6 +51,13 @@ function useGlobeTexture() {
     for (const country of countries) {
       ctx.beginPath()
       path(country)
+      ctx.fill()
+    }
+    // Lakes cut back out of the land
+    ctx.fillStyle = colors.ocean
+    for (const lake of lakes) {
+      ctx.beginPath()
+      path(lake)
       ctx.fill()
     }
 
@@ -94,18 +110,16 @@ function linesGeometry(lines: Position[][]) {
   return g
 }
 
-const countryLines = () =>
-  countries.flatMap((country) =>
-    country.geometry.type === 'Polygon'
-      ? country.geometry.coordinates
-      : country.geometry.coordinates.flat(),
+const outlines = (places: Place[]) =>
+  places.flatMap((place) =>
+    place.geometry.type === 'Polygon' ? place.geometry.coordinates : place.geometry.coordinates.flat(),
   )
 
-// Every country outline and the US state lines, as 3D lines. Lines are drawn by the GPU at a fixed 1 px width, so unlike
+// Every country outline, lake shore and US state line, as 3D lines. Lines are drawn by the GPU at a fixed 1 px width, so unlike
 // borders painted into the texture they don't get thick and blurry when
 // zoomed in.
 function Borders() {
-  const countryGeometry = useMemo(() => linesGeometry(countryLines()), [])
+  const countryGeometry = useMemo(() => linesGeometry([...outlines(countries), ...outlines(lakes)]), [])
   const stateGeometry = useMemo(() => linesGeometry(stateBorders.coordinates), [])
   return (
     <>

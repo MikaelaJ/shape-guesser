@@ -42,6 +42,7 @@ What it doesn't do: the game is about recognising a *visual* shape, so it isn't 
 - **d3-geo** for projections, distances, point-in-country tests and great-circle arcs
 - **Country borders:** [Natural Earth](https://www.naturalearthdata.com/) 1:50m (public domain), via the [world-atlas](https://github.com/topojson/world-atlas) package
 - **Population:** [Wikidata](https://www.wikidata.org) (CC0), fetched by `scripts/fetch-population.mjs` into `src/data/population.json`. Each clue shows the year of its figure, since Wikidata's newest number varies by country (from 2017 to this year)
+- **Lakes:** Natural Earth 1:50m lakes (public domain), the 110 larger than 1 500 km², fetched by `scripts/fetch-lakes.mjs` into `src/data/lakes.json`
 - **US states:** US Census Bureau boundaries (public domain), via the [us-atlas](https://github.com/topojson/us-atlas) package. The 50 states, without DC and the overseas territories
 
 ### How it fits together
@@ -54,6 +55,7 @@ What it doesn't do: the game is about recognising a *visual* shape, so it isn't 
 | `src/Globe.tsx` | The 3D scene: textured globe, highlight, fresnel atmosphere, markers, animated arc |
 | `src/App.tsx` | Game flow, keyboard and pointer input, announcements, focus management |
 | `src/facts.ts` | Clues: population (from Wikidata) and a hand-written part of the world for every country and state |
+| `scripts/fetch-lakes.mjs` | Fetches the big lakes from Natural Earth |
 | `scripts/fetch-population.mjs` | Fetches the latest population of every country and state from Wikidata |
 | `src/Silhouette.tsx` | The country outline, on an azimuthal equal-area projection centred on it |
 
@@ -69,6 +71,7 @@ Some decisions worth explaining:
 - **The daily challenge** uses a seeded random number generator keyed on the date, so everyone gets the same five countries without a server.
 - **Countries and states are one pool of shapes.** The only differences are the score scale and the name: states are shown as "Georgia, USA", so Georgia the state can't be confused with Georgia the country. Another set, like Swedish counties, would just be added to the pool.
 - **State lines are drawn once:** topojson's `mesh` gives only the lines between neighbouring states, so shared borders aren't drawn twice and coastlines come from the country data.
+- **Lakes are drawn on top of the land.** The country shapes include lakes as land, so without them the Great Lakes were missing and Michigan, Wisconsin, Ohio and New York had no lake shores. The lakes are painted back as water and get shorelines like the coasts. Scoring still uses the country shapes, so a pin in Lake Michigan counts as the US.
 - **Crimea is part of Ukraine, and Kaliningrad isn't part of Russia's outline.** The map data draws both inside Russia. Crimea is moved to Ukraine, as recognised internationally (UN General Assembly resolution 68/262), and merged into its outline with topojson's `merge` so no border is left across the isthmus. Kaliningrad stays on the map as land of its own, but isn't asked about or counted as Russia, so Russia's silhouette is the main part of the country.
 - **Disputed areas** that the data draws as separate shapes (Western Sahara, Somaliland, Northern Cyprus) are shown on the map but never asked about, so the game doesn't take a side.
 

@@ -9,7 +9,12 @@ import type {
   Topology,
 } from 'topojson-specification'
 import usAtlas from 'us-atlas/states-10m.json'
+import lakeData from './data/lakes.json'
 import world from 'world-atlas/countries-50m.json'
+
+// The big lakes, drawn as water on top of the land: the country shapes
+// include them as land (see scripts/fetch-lakes.mjs)
+export const lakes = lakeData.features as Feature<Polygon | MultiPolygon, { name: string }>[]
 
 // Something to guess: a country or a US state
 export type Place = Feature<Polygon | MultiPolygon, { name: string }>

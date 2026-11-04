@@ -8,7 +8,8 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
-    "data:population": "node scripts/fetch-population.mjs"
+    "data:population": "node scripts/fetch-population.mjs",
+    "data:lakes": "node scripts/fetch-lakes.mjs"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.9",
