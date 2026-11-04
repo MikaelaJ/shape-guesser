@@ -138,6 +138,10 @@ button.primary:disabled {
   color: var(--muted);
   margin-left: 0.6rem;
 }
+.settings {
+  display: flex;
+  gap: 0.5rem;
+}
 .chip-button {
   background: var(--panel);
   backdrop-filter: blur(8px);
@@ -265,6 +269,47 @@ button.primary:disabled {
   margin: 0.5rem 0 0;
   font-family: var(--display);
   font-size: 1.3rem;
+}
+
+/* Time left, as a bar that shrinks */
+.clock {
+  height: 4px;
+  margin-top: 0.75rem;
+  border-radius: 999px;
+  background: var(--line);
+  overflow: hidden;
+}
+.clock-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: inherit;
+}
+.speed {
+  margin: 0.4rem 0 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+}
+.clues {
+  margin: 0.75rem 0 0;
+  text-align: left;
+  border-top: 1px solid var(--line);
+}
+.clues div {
+  padding: 0.4rem 0;
+  border-bottom: 1px solid var(--line);
+  animation: rise 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.clues dt {
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+.clues dd {
+  margin: 0;
+  font-size: 0.95rem;
+}
+.clue-button {
+  margin-top: 0.75rem;
 }
 
 .guess-bar {
@@ -399,6 +444,12 @@ button.primary:disabled {
   .prompt {
     font-size: 1.05rem;
   }
+  .round .silhouette {
+    max-height: 7rem;
+  }
+  .clues dd {
+    font-size: 0.85rem;
+  }
   .reveal {
     left: 1rem;
     right: 1rem;
@@ -411,7 +462,8 @@ button.primary:disabled {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .panel {
+  .panel,
+  .clues div {
     animation: none;
   }
   button,

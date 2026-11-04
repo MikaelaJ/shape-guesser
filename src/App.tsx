@@ -7,11 +7,21 @@ import {
   type RefObject,
   type WheelEvent,
 } from 'react'
-import { ROUNDS, pickPlaces, scoreSquare, todayKey } from './game'
+import { cluesFor } from './facts'
+import {
+  CLUE_TIMES,
+  ROUNDS,
+  ROUND_SECONDS,
+  pickPlaces,
+  scoreSquare,
+  speedFactor,
+  todayKey,
+} from './game'
 import {
   MAX_SCORE,
   angleBetween,
   distanceToPlace,
+  geoCentre,
   isState,
   scoreScaleFor,
   formatKm,
@@ -37,7 +47,15 @@ import {
 } from './view'
 
 type Phase = 'intro' | 'guessing' | 'reveal' | 'summary'
-type Result = { country: Place; guess: LatLon; nearest: LatLon; km: number; score: number }
+// guess, nearest and km are null when the time ran out without a pin
+type Result = {
+  country: Place
+  guess: LatLon | null
+  nearest: LatLon | null
+  km: number | null
+  seconds: number
+  score: number
+}
 
 const PORTFOLIO_URL = 'https://mikaelajohansson.com/'
 const GAME_URL = 'https://mikaelajohansson.com/shape-guesser/'
@@ -50,10 +68,12 @@ function spread(pointers: Map<number, { x: number; y: number }>) {
   return a && b ? Math.hypot(a.x - b.x, a.y - b.y) : 0
 }
 const points = (n: number) => n.toLocaleString('en-GB')
+const percent = (factor: number) => `${Math.round(factor * 100)} %`
 
 export default function App() {
   const reducedMotion = useReducedMotion()
   const [soundOn, setSoundOn] = useStoredBoolean('shape-guesser:sound', true)
+  const [timerOn, setTimerOn] = useStoredBoolean('shape-guesser:timer', true)
   const view = useRef<View>({
     lat: 20,
     lon: 10,
@@ -71,6 +91,10 @@ export default function App() {
   const [pin, setPin] = useState<LatLon | null>(null)
   const [results, setResults] = useState<Result[]>([])
   const [announcement, setAnnouncement] = useState('')
+  // Seconds into the round. The ref is the source of truth for the game
+  // logic; the state is for showing it.
+  const clock = useRef(0)
+  const [elapsed, setElapsed] = useState(0)
 
   // The pointer-up handler outlives the render it was created in, so it
   // reads the phase from a ref rather than a stale closure
@@ -100,6 +124,8 @@ export default function App() {
   const total = results.reduce((sum, r) => sum + r.score, 0)
   const current = rounds[round]
   const lastResult = results[results.length - 1]
+  const clues = current ? cluesFor(current) : []
+  const cluesShown = CLUE_TIMES.filter((at) => elapsed >= at).length
 
   // Move keyboard focus to wherever the player needs to act next
   useEffect(() => {
@@ -117,6 +143,7 @@ export default function App() {
     setRound(0)
     setResults([])
     setPin(null)
+    resetClock()
     setPhase('guessing')
     view.current.spin = false
     view.current.targetDist = 3
@@ -131,11 +158,13 @@ export default function App() {
 
   function guess(point: LatLon | null = pin) {
     if (!point || !current) return
+    const seconds = clock.current
     const { km, nearest } = distanceToPlace(current, point)
-    const score = scoreFor(km, scoreScaleFor(current))
+    const score = Math.round(scoreFor(km, scoreScaleFor(current)) * speedFactor(seconds))
     setPin(point)
-    setResults((r) => [...r, { country: current, guess: point, nearest, km, score }])
+    setResults((r) => [...r, { country: current, guess: point, nearest, km, seconds, score }])
     setPhase('reveal')
+    phaseRef.current = 'reveal'
 
     // Fly the camera out to see both the guess and the answer
     const centre = midpoint(point, nearest)
@@ -149,10 +178,82 @@ export default function App() {
     const name = placeName(current)
     announce(
       km === 0
-        ? `Spot on, that's inside ${name}! ${score} points.`
-        : `It was ${name}. You were ${formatKm(km)} away. ${score} points.`,
+        ? `Spot on, that's inside ${name}! ${Math.round(seconds)} seconds. ${score} points.`
+        : `It was ${name}. You were ${formatKm(km)} away, after ${Math.round(seconds)} seconds. ${score} points.`,
     )
   }
+
+  // Out of time: a dropped pin counts as the guess, otherwise no points
+  function timeUp() {
+    if (!current) return
+    if (pin) {
+      guess(pin)
+      return
+    }
+    setResults((r) => [
+      ...r,
+      { country: current, guess: null, nearest: null, km: null, seconds: ROUND_SECONDS, score: 0 },
+    ])
+    setPhase('reveal')
+    phaseRef.current = 'reveal'
+    const centre = geoCentre(current)
+    const v = view.current
+    v.targetLat = clampLat(centre.lat)
+    v.targetLon = centre.lon
+    v.targetDist = isState(current) ? 1.6 : 2.2
+    play(() => sounds.reveal(0))
+    announce(`Time's up! It was ${placeName(current)}. 0 points.`)
+  }
+
+  function resetClock() {
+    clock.current = 0
+    setElapsed(0)
+  }
+
+  // Moves the round's clock forward, by the timer or by asking for a clue,
+  // and gives out clues, the 10 second warning and the time-up as it goes
+  function advanceClock(to: number) {
+    if (phaseRef.current !== 'guessing' || !current) return
+    const from = clock.current
+    const now = Math.min(to, ROUND_SECONDS)
+    clock.current = now
+    setElapsed(now)
+    CLUE_TIMES.forEach((at, i) => {
+      const clue = clues[i]
+      if (clue && from < at && now >= at) {
+        play(sounds.pin)
+        announce(`Clue. ${clue.label}: ${clue.value}.`)
+      }
+    })
+    if (!timerOn) return
+    const warnAt = ROUND_SECONDS - 10
+    if (from < warnAt && now >= warnAt) announce('10 seconds left.')
+    if (now >= ROUND_SECONDS) timeUp()
+  }
+
+  function takeClue() {
+    const nextAt = CLUE_TIMES.find((at) => at > clock.current)
+    if (nextAt !== undefined) advanceClock(nextAt)
+  }
+
+  // The timer ticks only while guessing with the timer on, and not while
+  // the tab is hidden. A long gap between ticks (a sleeping laptop) counts
+  // as a quarter of a second, so nobody loses a round to it.
+  const advanceRef = useRef(advanceClock)
+  useEffect(() => {
+    advanceRef.current = advanceClock
+  })
+  useEffect(() => {
+    if (phase !== 'guessing' || !timerOn) return
+    let last = performance.now()
+    const timer = setInterval(() => {
+      const now = performance.now()
+      const delta = Math.min(now - last, 250) / 1000
+      last = now
+      if (!document.hidden) advanceRef.current(clock.current + delta)
+    }, 100)
+    return () => clearInterval(timer)
+  }, [phase, timerOn, round])
 
   function next() {
     if (round + 1 >= ROUNDS) {
@@ -165,6 +266,7 @@ export default function App() {
     }
     setRound(round + 1)
     setPin(null)
+    resetClock()
     setPhase('guessing')
     announce(roundPrompt(round + 2))
   }
@@ -195,6 +297,10 @@ export default function App() {
         break
       case '-':
         zoomBy(v, ZOOM_STEP)
+        break
+      case 'c':
+      case 'C':
+        takeClue()
         break
       case ' ':
         placePin(centre())
@@ -318,14 +424,26 @@ export default function App() {
             by <a href={PORTFOLIO_URL}>Mikaela Johansson</a>
           </span>
         </p>
-        <button
-          type="button"
-          className="chip-button"
-          aria-pressed={soundOn}
-          onClick={() => setSoundOn(!soundOn)}
-        >
-          Sound {soundOn ? 'on' : 'off'}
-        </button>
+        <div className="settings">
+          {/* A time limit you can't turn off fails WCAG 2.2.1, and not
+              everyone can find a place in 60 seconds */}
+          <button
+            type="button"
+            className="chip-button"
+            aria-pressed={timerOn}
+            onClick={() => setTimerOn(!timerOn)}
+          >
+            Timer {timerOn ? 'on' : 'off'}
+          </button>
+          <button
+            type="button"
+            className="chip-button"
+            aria-pressed={soundOn}
+            onClick={() => setSoundOn(!soundOn)}
+          >
+            Sound {soundOn ? 'on' : 'off'}
+          </button>
+        </div>
       </header>
 
       <div
@@ -351,15 +469,16 @@ export default function App() {
       <ZoomButtons view={view} canZoomIn={canZoomIn} canZoomOut={canZoomOut} />
       <p id="globe-help" className="sr-only">
         Arrow keys spin the globe under the crosshair in the middle, hold Shift for bigger steps. Plus
-        and minus zoom. Space drops a pin, Enter guesses.
+        and minus zoom. Space drops a pin, Enter guesses, C gives a clue.
       </p>
 
       {phase === 'intro' && (
         <section className="panel intro" aria-labelledby="intro-title">
           <h1 id="intro-title">Shape Guesser</h1>
           <p>
-            You get a shape: a country or a US state. Find it on the globe and drop a pin. The closer you are,
-            the more points: {ROUNDS} rounds, up to {points(MAX_SCORE)} points each.
+            You get a shape: a country or a US state. Find it on the globe and drop a pin. The
+            closer and faster you are, the more points: {ROUNDS} rounds, up to{' '}
+            {points(MAX_SCORE)} points each. Stuck? Clues appear as time goes by.
           </p>
           <div className="actions">
             <button type="button" className="primary" onClick={() => start(true)}>
@@ -378,7 +497,18 @@ export default function App() {
               </li>
               <li>
                 <strong>Keyboard:</strong> arrow keys spin the globe under the crosshair, + and −
-                zoom, Space drops a pin, Enter guesses.
+                zoom, Space drops a pin, Enter guesses, C gives a clue.
+              </li>
+              <li>
+                <strong>Time and clues:</strong> each round has {ROUND_SECONDS} seconds. The
+                population comes after {CLUE_TIMES[0]} seconds, the part of the world after{' '}
+                {CLUE_TIMES[1]} and the first letter after {CLUE_TIMES[2]}. Getting a clue early
+                skips the clock ahead to it.
+              </li>
+              <li>
+                <strong>Speed bonus:</strong> guess straight away and you keep all your points; at
+                the end of the time, half. Turn the timer off at the top to play without a time
+                limit; clues then only come when you ask, and still cost the same.
               </li>
               <li>
                 Inside the shape is a perfect score. Outside, distance is measured to its nearest
@@ -397,6 +527,33 @@ export default function App() {
             </p>
             <Silhouette country={current} />
             <p className="prompt">Where is this?</p>
+            {timerOn && (
+              <div className="clock" aria-hidden="true">
+                <div
+                  className="clock-fill"
+                  style={{ width: `${(1 - elapsed / ROUND_SECONDS) * 100}%` }}
+                />
+              </div>
+            )}
+            <p className="speed">
+              {timerOn && `${Math.ceil(ROUND_SECONDS - elapsed)} s left · `}
+              Speed bonus {percent(speedFactor(elapsed))}
+            </p>
+            {cluesShown > 0 && (
+              <dl className="clues">
+                {clues.slice(0, cluesShown).map((clue) => (
+                  <div key={clue.label}>
+                    <dt>{clue.label}</dt>
+                    <dd>{clue.value}</dd>
+                  </div>
+                ))}
+              </dl>
+            )}
+            {cluesShown < clues.length && (
+              <button type="button" className="chip-button clue-button" onClick={takeClue}>
+                Get a clue
+              </button>
+            )}
           </section>
           <div className="guess-bar">
             <button type="button" className="primary" disabled={!pin} onClick={() => guess()}>
@@ -447,19 +604,24 @@ function RevealPanel({
   onNext: () => void
   buttonRef: RefObject<HTMLButtonElement | null>
 }) {
-  const km = useCountUp(Math.round(result.km), 1100, reducedMotion)
+  const km = useCountUp(Math.round(result.km ?? 0), 1100, reducedMotion)
   const score = useCountUp(result.score, 1300, reducedMotion)
   const perfect = result.km === 0
+  const timedOut = result.km === null
   return (
     <section className="panel reveal" aria-labelledby="reveal-title">
-      <p className="eyebrow">{perfect ? 'Spot on!' : 'It was'}</p>
+      <p className="eyebrow">{timedOut ? 'Time’s up! It was' : perfect ? 'Spot on!' : 'It was'}</p>
       <h2 id="reveal-title">{placeName(result.country)}</h2>
       {/* The numbers count up visually; screen readers get the final values
           from the announcement instead of every step */}
       <dl className="stats" aria-hidden="true">
         <div>
           <dt>Distance</dt>
-          <dd>{perfect ? 'Inside!' : `${points(km)} km`}</dd>
+          <dd>{timedOut ? '–' : perfect ? 'Inside!' : `${points(km)} km`}</dd>
+        </div>
+        <div>
+          <dt>Time</dt>
+          <dd>{Math.round(result.seconds)} s</dd>
         </div>
         <div>
           <dt>Points</dt>
@@ -526,7 +688,9 @@ function SummaryPanel({
           <li key={i}>
             <span aria-hidden="true">{scoreSquare(r.score)}</span>
             <span className="name">{placeName(r.country)}</span>
-            <span className="km">{r.km === 0 ? 'inside' : formatKm(r.km)}</span>
+            <span className="km">
+              {r.km === null ? 'time’s up' : r.km === 0 ? 'inside' : formatKm(r.km)}
+            </span>
             <span className="pts">{points(r.score)}</span>
           </li>
         ))}

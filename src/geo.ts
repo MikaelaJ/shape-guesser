@@ -1,4 +1,4 @@
-import { geoArea, geoContains, geoDistance, geoInterpolate } from 'd3-geo'
+import { geoArea, geoCentroid, geoContains, geoDistance, geoInterpolate } from 'd3-geo'
 import type { Feature, FeatureCollection, MultiPolygon, Polygon, Position } from 'geojson'
 import { Vector3 } from 'three'
 import { feature, mesh } from 'topojson-client'
@@ -150,6 +150,11 @@ export function arcPoints(from: LatLon, to: LatLon, segments = 64) {
     const [lon, lat] = interpolate(t)
     return toVector({ lat, lon }, 1.003 + height * Math.sin(Math.PI * t))
   })
+}
+
+export function geoCentre(place: Place): LatLon {
+  const [lon, lat] = geoCentroid(place)
+  return { lat, lon }
 }
 
 export function midpoint(a: LatLon, b: LatLon): LatLon {

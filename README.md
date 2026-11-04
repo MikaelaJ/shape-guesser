@@ -1,6 +1,6 @@
 # Shape Guesser
 
-A small geo mini-game on a 3D globe: you get a shape, either a country or a US state, find it on the globe and drop a pin. The closer you are, the more points. Five rounds, a daily challenge that's the same for everyone, and a shareable result.
+A small geo mini-game on a 3D globe: you get a shape, either a country or a US state, find it on the globe and drop a pin. The closer and faster you are, the more points, and clues appear as the clock runs. Five rounds, a daily challenge that's the same for everyone, and a shareable result.
 
 **Play:** https://mikaelajohansson.com/shape-guesser/
 
@@ -9,11 +9,14 @@ Built by [Mikaela Johansson](https://mikaelajohansson.com) as a focused, finishe
 ## How it plays
 
 1. A silhouette appears (a country or a US state, mixed, about one round in four is a state), shown on its own projection so the shape isn't stretched and its position gives nothing away.
-2. Spin and zoom the globe (drag, scroll, pinch, the + and − buttons, or the keyboard) and drop a pin where you think it is.
-3. An arc flies from your pin to the answer, the country lights up, and the distance and points count up.
-4. After five rounds you get your total and a row of 🟩🟨🟥 to share.
+2. You have 60 seconds. After 15 you get the population, after 30 the part of the world, after 45 the first letter. Need one sooner? "Get a clue" skips the clock ahead to it.
+3. Spin and zoom the globe (drag, scroll, pinch, the + and − buttons, or the keyboard) and drop a pin where you think it is.
+4. An arc flies from your pin to the answer, the country lights up, and the distance and points count up.
+5. After five rounds you get your total and a row of 🟩🟨🟥 to share.
 
-**Scoring:** a pin inside the country is a perfect 5 000. Outside, distance is measured to the country's **nearest border, not its centre**. Measuring to the centre would punish a click just inside Russia's border for being thousands of kilometres from its middle. Points then fall off smoothly: `5000 × e^(−km / 2000)`, so 500 km away gives about 3 900 and 2 000 km about 1 800. States are much smaller, so a state uses 500 km instead of 2 000: 100 km off still gives about 4 100.
+**Scoring:** distance points × a speed bonus. The speed bonus is 100 % at once and falls to 50 % when the time runs out; out of time with no pin dropped is 0, with a pin it counts as the guess.
+
+**Distance points:** a pin inside the country is a perfect 5 000. Outside, distance is measured to the country's **nearest border, not its centre**. Measuring to the centre would punish a click just inside Russia's border for being thousands of kilometres from its middle. Points then fall off smoothly: `5000 × e^(−km / 2000)`, so 500 km away gives about 3 900 and 2 000 km about 1 800. States are much smaller, so a state uses 500 km instead of 2 000: 100 km off still gives about 4 100.
 
 ## Accessibility
 
@@ -23,6 +26,8 @@ Accessibility is a core part of how I work (I'm CPACC certified), so it's built 
 - **Screen reader announcements** for each round, the pin position and the result ("It was Togo. You were 1,397 km away. 2,487 points."). Counting-up numbers are hidden from screen readers, which get the final values instead of every step.
 - **Focus moves to where you act next:** the globe at the start of a round, "Next round" after a guess, the score at the end.
 - **Respects "reduce motion":** no idle spin, no camera easing, the arc and numbers appear at their final state.
+- **The timer can be turned off.** A time limit you can't switch off fails WCAG 2.2.1 (Timing Adjustable), and not everyone can find a place in 60 seconds. With the timer off clues only come when you ask, and cost the same as waiting would have, so the score stays comparable. The timer also pauses when the tab is hidden.
+- **Clues are announced** to screen readers as they appear, along with a "10 seconds left" warning. C gives a clue from the keyboard.
 - **Sound** is short synthesised tones that only play after you do something, with an on/off toggle that's remembered.
 - **Zoom without a scroll wheel:** on-screen + and − buttons (named "Zoom in" and "Zoom out" for screen readers, disabled at the limits), pinch on touch screens, and + / − on the keyboard.
 - **Contrast** meets WCAG AA, and buttons are at least 44 px tall. The header and buttons have their own background, so they stay readable over light land when zoomed in.
@@ -42,10 +47,11 @@ What it doesn't do: the game is about recognising a *visual* shape, so it isn't 
 | File | What it does |
 | --- | --- |
 | `src/geo.ts` | Country and state data, lat/lon ↔ 3D conversion, distance to nearest border, scoring, arcs |
-| `src/game.ts` | Seeded random picks for the daily challenge (no backend needed), share squares |
+| `src/game.ts` | Round timing, clue times and speed bonus, seeded random picks for the daily challenge (no backend needed), share squares |
 | `src/view.ts` | The camera model, and picking: which point on the globe is under the pointer |
 | `src/Globe.tsx` | The 3D scene: textured globe, highlight, fresnel atmosphere, markers, animated arc |
 | `src/App.tsx` | Game flow, keyboard and pointer input, announcements, focus management |
+| `src/facts.ts` | Clues: population and part of the world for every country and state |
 | `src/Silhouette.tsx` | The country outline, on an azimuthal equal-area projection centred on it |
 
 Some decisions worth explaining:
@@ -55,12 +61,15 @@ Some decisions worth explaining:
 - **The globe texture is drawn once** from the GeoJSON onto a canvas with d3-geo's equirectangular projection, which maps directly onto a three.js sphere: 8192 px wide where the graphics card and screen allow, 4096 on phones. The answer highlight is a second, transparent texture drawn per round.
 - **Borders are real 3D lines, not part of the texture.** Painted into the image they got thick and blurry when zoomed in; as line geometry the GPU draws them 1 px wide at any zoom. The globe surface uses a small polygon offset so the lines just above it don't flicker.
 - **Zoom is proportional:** each step multiplies the camera's height above the surface, so it feels the same far out and close in. Pins shrink as you zoom so they don't cover small countries.
+- **One clock for both timer settings.** A clue isn't free: asking for it moves the round's clock forward to when it would have appeared. That's what keeps "take every clue straight away" from being the best strategy, and lets the timer-off mode share the same scoring.
 - **The daily challenge** uses a seeded random number generator keyed on the date, so everyone gets the same five countries without a server.
 - **Countries and states are one pool of shapes.** The only differences are the score scale and the name: states are shown as "Georgia, USA", so Georgia the state can't be confused with Georgia the country. Another set, like Swedish counties, would just be added to the pool.
 - **State lines are drawn once:** topojson's `mesh` gives only the lines between neighbouring states, so shared borders aren't drawn twice and coastlines come from the country data.
 - **Disputed areas** that the data draws as separate shapes (Western Sahara, Somaliland, Northern Cyprus) are shown on the map but never asked about, so the game doesn't take a side.
 
 ## What I'd do next
+
+- Check the population figures against a single source and note its year (they're rounded estimates: about 2023 for countries, the 2020 census for states)
 
 - A small backend for a daily leaderboard (a serverless function and a tiny database)
 - Difficulty levels, e.g. continents first, small countries later

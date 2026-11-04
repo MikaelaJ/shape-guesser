@@ -235,7 +235,8 @@ type GlobeProps = {
   view: RefObject<View>
   reducedMotion: boolean
   pin: LatLon | null
-  reveal: { guess: LatLon; nearest: LatLon; country: Place } | null
+  // guess and nearest are null when the time ran out without a pin
+  reveal: { guess: LatLon | null; nearest: LatLon | null; country: Place } | null
 }
 
 function Scene({ view, reducedMotion, pin, reveal }: GlobeProps) {
@@ -271,8 +272,10 @@ function Scene({ view, reducedMotion, pin, reveal }: GlobeProps) {
       {pin && <Marker at={pin} color={colors.accent} view={view} />}
       {reveal && (
         <>
-          <Marker at={reveal.nearest} color={colors.answer} view={view} />
-          <Arc from={reveal.guess} to={reveal.nearest} reducedMotion={reducedMotion} />
+          {reveal.nearest && <Marker at={reveal.nearest} color={colors.answer} view={view} />}
+          {reveal.guess && reveal.nearest && (
+            <Arc from={reveal.guess} to={reveal.nearest} reducedMotion={reducedMotion} />
+          )}
         </>
       )}
     </>
