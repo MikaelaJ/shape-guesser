@@ -244,6 +244,11 @@ button.primary:disabled {
   margin: 0.5rem 0 0;
   padding-left: 1.1rem;
 }
+.sources {
+  margin: 1rem 0 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
 .how strong {
   color: var(--text);
   font-weight: 500;

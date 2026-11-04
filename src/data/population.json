@@ -1,0 +1,1428 @@
+{
+  "source": "Wikidata, https://www.wikidata.org (CC0), property P1082 (population)",
+  "fetched": "2026-11-04",
+  "countries": {
+    "100": {
+      "wikidata": "Q219",
+      "population": 6423207,
+      "year": 2025
+    },
+    "104": {
+      "wikidata": "Q836",
+      "population": 53370609,
+      "year": 2017
+    },
+    "108": {
+      "wikidata": "Q967",
+      "population": 13689450,
+      "year": 2023
+    },
+    "112": {
+      "wikidata": "Q184",
+      "population": 9056080,
+      "year": 2026
+    },
+    "116": {
+      "wikidata": "Q424",
+      "population": 17423880,
+      "year": 2023
+    },
+    "120": {
+      "wikidata": "Q1009",
+      "population": 28372687,
+      "year": 2023
+    },
+    "124": {
+      "wikidata": "Q16",
+      "population": 41798407,
+      "year": 2026
+    },
+    "132": {
+      "wikidata": "Q1011",
+      "population": 555988,
+      "year": 2020
+    },
+    "136": {
+      "wikidata": "Q5785",
+      "population": 88833,
+      "year": 2024
+    },
+    "140": {
+      "wikidata": "Q929",
+      "population": 5152421,
+      "year": 2023
+    },
+    "144": {
+      "wikidata": "Q854",
+      "population": 22037000,
+      "year": 2023
+    },
+    "148": {
+      "wikidata": "Q657",
+      "population": 19319064,
+      "year": 2023
+    },
+    "152": {
+      "wikidata": "Q298",
+      "population": 19458000,
+      "year": 2021
+    },
+    "156": {
+      "wikidata": "Q148",
+      "population": 1404890000,
+      "year": 2025
+    },
+    "158": {
+      "wikidata": "Q865",
+      "population": 23262544,
+      "year": 2026
+    },
+    "170": {
+      "wikidata": "Q739",
+      "population": 52321152,
+      "year": 2023
+    },
+    "174": {
+      "wikidata": "Q970",
+      "population": 900000,
+      "year": 2026
+    },
+    "178": {
+      "wikidata": "Q971",
+      "population": 6278845,
+      "year": 2024
+    },
+    "180": {
+      "wikidata": "Q974",
+      "population": 105789731,
+      "year": 2023
+    },
+    "184": {
+      "wikidata": "Q26988",
+      "population": 14222,
+      "year": 2023
+    },
+    "188": {
+      "wikidata": "Q800",
+      "population": 5265575,
+      "year": 2024
+    },
+    "191": {
+      "wikidata": "Q224",
+      "population": 3871833,
+      "year": 2021
+    },
+    "192": {
+      "wikidata": "Q241",
+      "population": 10985974,
+      "year": 2023
+    },
+    "196": {
+      "wikidata": "Q229",
+      "population": 1344976,
+      "year": 2023
+    },
+    "203": {
+      "wikidata": "Q213",
+      "population": 10909500,
+      "year": 2025
+    },
+    "204": {
+      "wikidata": "Q962",
+      "population": 14111034,
+      "year": 2023
+    },
+    "208": {
+      "wikidata": "Q35",
+      "population": 5822863,
+      "year": 2020
+    },
+    "212": {
+      "wikidata": "Q784",
+      "population": 74656,
+      "year": 2023
+    },
+    "214": {
+      "wikidata": "Q786",
+      "population": 10760028,
+      "year": 2022
+    },
+    "218": {
+      "wikidata": "Q736",
+      "population": 16938986,
+      "year": 2022
+    },
+    "222": {
+      "wikidata": "Q792",
+      "population": 6029976,
+      "year": 2024
+    },
+    "226": {
+      "wikidata": "Q983",
+      "population": 1847549,
+      "year": 2023
+    },
+    "231": {
+      "wikidata": "Q115",
+      "population": 128691692,
+      "year": 2023
+    },
+    "232": {
+      "wikidata": "Q986",
+      "population": 3497000,
+      "year": 2019
+    },
+    "233": {
+      "wikidata": "Q191",
+      "population": 1369995,
+      "year": 2025
+    },
+    "234": {
+      "wikidata": "Q4628",
+      "population": 54149,
+      "year": 2023
+    },
+    "238": {
+      "wikidata": "Q9648",
+      "population": 3662,
+      "year": 2021
+    },
+    "239": {
+      "wikidata": "Q35086",
+      "population": 35,
+      "year": 2019
+    },
+    "242": {
+      "wikidata": "Q712",
+      "population": 926276,
+      "year": 2018
+    },
+    "246": {
+      "wikidata": "Q33",
+      "population": 5652881,
+      "year": 2025
+    },
+    "248": {
+      "wikidata": "Q5689",
+      "population": 30836,
+      "year": 2025
+    },
+    "250": {
+      "wikidata": "Q142",
+      "population": 68605616,
+      "year": 2025
+    },
+    "258": {
+      "wikidata": "Q30971",
+      "population": 278786,
+      "year": 2022
+    },
+    "260": {
+      "wikidata": "Q129003",
+      "population": 196,
+      "year": 2012
+    },
+    "262": {
+      "wikidata": "Q977",
+      "population": 1000000,
+      "year": 2026
+    },
+    "266": {
+      "wikidata": "Q1000",
+      "population": 2300000,
+      "year": 2023
+    },
+    "268": {
+      "wikidata": "Q230",
+      "population": 3929581,
+      "year": 2024
+    },
+    "270": {
+      "wikidata": "Q1005",
+      "population": 2639916,
+      "year": 2021
+    },
+    "275": {
+      "wikidata": "Q219060",
+      "population": 5400000,
+      "year": 2026
+    },
+    "276": {
+      "wikidata": "Q183",
+      "population": 83467117,
+      "year": 2025
+    },
+    "288": {
+      "wikidata": "Q117",
+      "population": 32833031,
+      "year": 2021
+    },
+    "296": {
+      "wikidata": "Q710",
+      "population": 134518,
+      "year": 2024
+    },
+    "300": {
+      "wikidata": "Q41",
+      "population": 10566531,
+      "year": 2022
+    },
+    "304": {
+      "wikidata": "Q223",
+      "population": 56542,
+      "year": 2025
+    },
+    "308": {
+      "wikidata": "Q769",
+      "population": 114299,
+      "year": 2023
+    },
+    "316": {
+      "wikidata": "Q16635",
+      "population": 153836,
+      "year": 2020
+    },
+    "320": {
+      "wikidata": "Q774",
+      "population": 17263239,
+      "year": 2018
+    },
+    "324": {
+      "wikidata": "Q1006",
+      "population": 17521167,
+      "year": 2025
+    },
+    "328": {
+      "wikidata": "Q734",
+      "population": 878674,
+      "year": 2022
+    },
+    "332": {
+      "wikidata": "Q790",
+      "population": 10981229,
+      "year": 2017
+    },
+    "336": {
+      "wikidata": "Q237",
+      "population": 949,
+      "year": 2024
+    },
+    "340": {
+      "wikidata": "Q783",
+      "population": 11002356,
+      "year": 2025
+    },
+    "344": {
+      "wikidata": "Q8646",
+      "population": 7413070,
+      "year": 2021
+    },
+    "348": {
+      "wikidata": "Q28",
+      "population": 9489000,
+      "year": 2025
+    },
+    "352": {
+      "wikidata": "Q189",
+      "population": 376248,
+      "year": 2022
+    },
+    "356": {
+      "wikidata": "Q668",
+      "population": 1326093247,
+      "year": 2020
+    },
+    "360": {
+      "wikidata": "Q252",
+      "population": 275439000,
+      "year": 2021
+    },
+    "364": {
+      "wikidata": "Q794",
+      "population": 92417700,
+      "year": 2025
+    },
+    "368": {
+      "wikidata": "Q796",
+      "population": 43500000,
+      "year": 2026
+    },
+    "372": {
+      "wikidata": "Q27",
+      "population": 5149139,
+      "year": 2022
+    },
+    "376": {
+      "wikidata": "Q801",
+      "population": 9840000,
+      "year": 2023
+    },
+    "380": {
+      "wikidata": "Q38",
+      "population": 58850717,
+      "year": 2023
+    },
+    "384": {
+      "wikidata": "Q1008",
+      "population": 31165654,
+      "year": 2023
+    },
+    "388": {
+      "wikidata": "Q766",
+      "population": 2734093,
+      "year": 2019
+    },
+    "392": {
+      "wikidata": "Q17",
+      "population": 123802000,
+      "year": 2024
+    },
+    "398": {
+      "wikidata": "Q232",
+      "population": 20139914,
+      "year": 2024
+    },
+    "400": {
+      "wikidata": "Q810",
+      "population": 11300000,
+      "year": 2026
+    },
+    "404": {
+      "wikidata": "Q114",
+      "population": 47564296,
+      "year": 2019
+    },
+    "408": {
+      "wikidata": "Q423",
+      "population": 26418204,
+      "year": 2023
+    },
+    "410": {
+      "wikidata": "Q884",
+      "population": 51628117,
+      "year": 2022
+    },
+    "414": {
+      "wikidata": "Q817",
+      "population": 4300000,
+      "year": 2026
+    },
+    "417": {
+      "wikidata": "Q813",
+      "population": 7281800,
+      "year": 2025
+    },
+    "418": {
+      "wikidata": "Q819",
+      "population": 6858160,
+      "year": 2017
+    },
+    "422": {
+      "wikidata": "Q822",
+      "population": 5300000,
+      "year": 2026
+    },
+    "426": {
+      "wikidata": "Q1013",
+      "population": 2233339,
+      "year": 2017
+    },
+    "428": {
+      "wikidata": "Q211",
+      "population": 1845096,
+      "year": 2026
+    },
+    "430": {
+      "wikidata": "Q1014",
+      "population": 5214030,
+      "year": 2021
+    },
+    "434": {
+      "wikidata": "Q1016",
+      "population": 7100000,
+      "year": 2026
+    },
+    "438": {
+      "wikidata": "Q347",
+      "population": 38020,
+      "year": 2019
+    },
+    "440": {
+      "wikidata": "Q37",
+      "population": 2860002,
+      "year": 2023
+    },
+    "442": {
+      "wikidata": "Q32",
+      "population": 690959,
+      "year": 2026
+    },
+    "446": {
+      "wikidata": "Q14773",
+      "population": 682100,
+      "year": 2021
+    },
+    "450": {
+      "wikidata": "Q1019",
+      "population": 31964956,
+      "year": 2024
+    },
+    "454": {
+      "wikidata": "Q1020",
+      "population": 17563749,
+      "year": 2018
+    },
+    "458": {
+      "wikidata": "Q833",
+      "population": 34231700,
+      "year": 2025
+    },
+    "462": {
+      "wikidata": "Q826",
+      "population": 436330,
+      "year": 2017
+    },
+    "466": {
+      "wikidata": "Q912",
+      "population": 22395489,
+      "year": 2022
+    },
+    "470": {
+      "wikidata": "Q233",
+      "population": 553214,
+      "year": 2023
+    },
+    "478": {
+      "wikidata": "Q1025",
+      "population": 4900000,
+      "year": 2026
+    },
+    "480": {
+      "wikidata": "Q1027",
+      "population": 1264613,
+      "year": 2017
+    },
+    "484": {
+      "wikidata": "Q96",
+      "population": 132274416,
+      "year": 2024
+    },
+    "492": {
+      "wikidata": "Q235",
+      "population": 38857,
+      "year": 2025
+    },
+    "496": {
+      "wikidata": "Q711",
+      "population": 3409939,
+      "year": 2021
+    },
+    "498": {
+      "wikidata": "Q217",
+      "population": 2409207,
+      "year": 2024
+    },
+    "499": {
+      "wikidata": "Q236",
+      "population": 617213,
+      "year": 2022
+    },
+    "500": {
+      "wikidata": "Q13353",
+      "population": 5440,
+      "year": 2023
+    },
+    "504": {
+      "wikidata": "Q1028",
+      "population": 38300000,
+      "year": 2026
+    },
+    "508": {
+      "wikidata": "Q1029",
+      "population": 29668834,
+      "year": 2017
+    },
+    "512": {
+      "wikidata": "Q842",
+      "population": 5100000,
+      "year": 2026
+    },
+    "516": {
+      "wikidata": "Q1030",
+      "population": 2533794,
+      "year": 2017
+    },
+    "520": {
+      "wikidata": "Q697",
+      "population": 13650,
+      "year": 2017
+    },
+    "524": {
+      "wikidata": "Q837",
+      "population": 29164578,
+      "year": 2021
+    },
+    "528": {
+      "wikidata": "Q55",
+      "population": 17942942,
+      "year": 2024
+    },
+    "531": {
+      "wikidata": "Q25279",
+      "population": 152849,
+      "year": 2023
+    },
+    "533": {
+      "wikidata": "Q21203",
+      "population": 106739,
+      "year": 2022
+    },
+    "534": {
+      "wikidata": "Q26273",
+      "population": 43847,
+      "year": 2020
+    },
+    "540": {
+      "wikidata": "Q33788",
+      "population": 278500,
+      "year": 2017
+    },
+    "548": {
+      "wikidata": "Q686",
+      "population": 300019,
+      "year": 2020
+    },
+    "554": {
+      "wikidata": "Q664",
+      "population": 5307800,
+      "year": 2024
+    },
+    "558": {
+      "wikidata": "Q811",
+      "population": 7005764,
+      "year": 2025
+    },
+    "562": {
+      "wikidata": "Q1032",
+      "population": 21477348,
+      "year": 2017
+    },
+    "566": {
+      "wikidata": "Q1033",
+      "population": 211400708,
+      "year": 2021
+    },
+    "570": {
+      "wikidata": "Q34020",
+      "population": 1821,
+      "year": 2025
+    },
+    "574": {
+      "wikidata": "Q31057",
+      "population": 1739,
+      "year": 2021
+    },
+    "578": {
+      "wikidata": "Q20",
+      "population": 5627400,
+      "year": 2026
+    },
+    "580": {
+      "wikidata": "Q16644",
+      "population": 51475,
+      "year": 2022
+    },
+    "583": {
+      "wikidata": "Q702",
+      "population": 75817,
+      "year": 2023
+    },
+    "584": {
+      "wikidata": "Q709",
+      "population": 54366,
+      "year": 2023
+    },
+    "585": {
+      "wikidata": "Q695",
+      "population": 21729,
+      "year": 2017
+    },
+    "586": {
+      "wikidata": "Q843",
+      "population": 223773700,
+      "year": 2021
+    },
+    "591": {
+      "wikidata": "Q804",
+      "population": 4570133,
+      "year": 2025
+    },
+    "598": {
+      "wikidata": "Q691",
+      "population": 8935000,
+      "year": 2020
+    },
+    "600": {
+      "wikidata": "Q733",
+      "population": 6811297,
+      "year": 2017
+    },
+    "604": {
+      "wikidata": "Q419",
+      "population": 34157732,
+      "year": 2025
+    },
+    "608": {
+      "wikidata": "Q928",
+      "population": 112729484,
+      "year": 2024
+    },
+    "612": {
+      "wikidata": "Q35672",
+      "population": 47,
+      "year": 2021
+    },
+    "616": {
+      "wikidata": "Q36",
+      "population": 37563071,
+      "year": 2024
+    },
+    "620": {
+      "wikidata": "Q45",
+      "population": 10347892,
+      "year": 2021
+    },
+    "624": {
+      "wikidata": "Q1007",
+      "population": 1861283,
+      "year": 2017
+    },
+    "626": {
+      "wikidata": "Q574",
+      "population": 1400638,
+      "year": 2024
+    },
+    "630": {
+      "wikidata": "Q1183",
+      "population": 3285874,
+      "year": 2020
+    },
+    "634": {
+      "wikidata": "Q846",
+      "population": 2639211,
+      "year": 2017
+    },
+    "642": {
+      "wikidata": "Q218",
+      "population": 19053815,
+      "year": 2022
+    },
+    "643": {
+      "wikidata": "Q159",
+      "population": 146119928,
+      "year": 2025
+    },
+    "646": {
+      "wikidata": "Q1037",
+      "population": 14569341,
+      "year": 2025
+    },
+    "652": {
+      "wikidata": "Q25362",
+      "population": 10124,
+      "year": 2018
+    },
+    "654": {
+      "wikidata": "Q192184",
+      "population": 5633,
+      "year": 2016
+    },
+    "659": {
+      "wikidata": "Q763",
+      "population": 46922,
+      "year": 2025
+    },
+    "660": {
+      "wikidata": "Q25228",
+      "population": 19079,
+      "year": 2023
+    },
+    "662": {
+      "wikidata": "Q760",
+      "population": 167591,
+      "year": 2023
+    },
+    "663": {
+      "wikidata": "Q126125",
+      "population": 32358,
+      "year": 2020
+    },
+    "666": {
+      "wikidata": "Q34617",
+      "population": 5974,
+      "year": 2019
+    },
+    "670": {
+      "wikidata": "Q757",
+      "population": 100804,
+      "year": 2023
+    },
+    "674": {
+      "wikidata": "Q238",
+      "population": 34167,
+      "year": 2026
+    },
+    "678": {
+      "wikidata": "Q1039",
+      "population": 204327,
+      "year": 2017
+    },
+    "682": {
+      "wikidata": "Q851",
+      "population": 33000000,
+      "year": 2018
+    },
+    "686": {
+      "wikidata": "Q1041",
+      "population": 18100000,
+      "year": 2026
+    },
+    "688": {
+      "wikidata": "Q403",
+      "population": 6605168,
+      "year": 2024
+    },
+    "690": {
+      "wikidata": "Q1042",
+      "population": 119773,
+      "year": 2023
+    },
+    "694": {
+      "wikidata": "Q1044",
+      "population": 7557212,
+      "year": 2017
+    },
+    "702": {
+      "wikidata": "Q334",
+      "population": 5866139,
+      "year": 2021
+    },
+    "703": {
+      "wikidata": "Q214",
+      "population": 5409407,
+      "year": 2025
+    },
+    "704": {
+      "wikidata": "Q881",
+      "population": 96208984,
+      "year": 2019
+    },
+    "705": {
+      "wikidata": "Q215",
+      "population": 2116972,
+      "year": 2022
+    },
+    "706": {
+      "wikidata": "Q1045",
+      "population": 18100000,
+      "year": 2026
+    },
+    "710": {
+      "wikidata": "Q258",
+      "population": 62027503,
+      "year": 2022
+    },
+    "716": {
+      "wikidata": "Q954",
+      "population": 15178979,
+      "year": 2022
+    },
+    "724": {
+      "wikidata": "Q29",
+      "population": 48592909,
+      "year": 2024
+    },
+    "728": {
+      "wikidata": "Q958",
+      "population": 12575714,
+      "year": 2017
+    },
+    "729": {
+      "wikidata": "Q1049",
+      "population": 48945000,
+      "year": 2025
+    },
+    "732": {
+      "wikidata": "Q6250",
+      "population": 612000,
+      "year": 2021
+    },
+    "740": {
+      "wikidata": "Q730",
+      "population": 563402,
+      "year": 2017
+    },
+    "748": {
+      "wikidata": "Q1050",
+      "population": 1230506,
+      "year": 2023
+    },
+    "752": {
+      "wikidata": "Q34",
+      "population": 10609460,
+      "year": 2025
+    },
+    "756": {
+      "wikidata": "Q39",
+      "population": 9104063,
+      "year": 2025
+    },
+    "760": {
+      "wikidata": "Q858",
+      "population": 23000000,
+      "year": 2026
+    },
+    "762": {
+      "wikidata": "Q863",
+      "population": 9504000,
+      "year": 2021
+    },
+    "764": {
+      "wikidata": "Q869",
+      "population": 66188503,
+      "year": 2017
+    },
+    "768": {
+      "wikidata": "Q945",
+      "population": 12400000,
+      "year": 2026
+    },
+    "776": {
+      "wikidata": "Q678",
+      "population": 105697,
+      "year": 2020
+    },
+    "780": {
+      "wikidata": "Q754",
+      "population": 1369125,
+      "year": 2017
+    },
+    "784": {
+      "wikidata": "Q878",
+      "population": 10100000,
+      "year": 2026
+    },
+    "788": {
+      "wikidata": "Q948",
+      "population": 37100000,
+      "year": 2026
+    },
+    "792": {
+      "wikidata": "Q43",
+      "population": 85372377,
+      "year": 2023
+    },
+    "795": {
+      "wikidata": "Q874",
+      "population": 6117933,
+      "year": 2021
+    },
+    "796": {
+      "wikidata": "Q18221",
+      "population": 44542,
+      "year": 2020
+    },
+    "800": {
+      "wikidata": "Q1036",
+      "population": 47123531,
+      "year": 2021
+    },
+    "804": {
+      "wikidata": "Q212",
+      "population": 41167335,
+      "year": 2022
+    },
+    "807": {
+      "wikidata": "Q221",
+      "population": 1836713,
+      "year": 2021
+    },
+    "818": {
+      "wikidata": "Q79",
+      "population": 114500000,
+      "year": 2026
+    },
+    "826": {
+      "wikidata": "Q145",
+      "population": 67326569,
+      "year": 2021
+    },
+    "831": {
+      "wikidata": "Q25230",
+      "population": 67787,
+      "year": 2024
+    },
+    "832": {
+      "wikidata": "Q785",
+      "population": 103267,
+      "year": 2021
+    },
+    "833": {
+      "wikidata": "Q9676",
+      "population": 84523,
+      "year": 2024
+    },
+    "834": {
+      "wikidata": "Q924",
+      "population": 61741120,
+      "year": 2022
+    },
+    "840": {
+      "wikidata": "Q30",
+      "population": 340110988,
+      "year": 2024
+    },
+    "850": {
+      "wikidata": "Q11703",
+      "population": 104917,
+      "year": 2023
+    },
+    "854": {
+      "wikidata": "Q965",
+      "population": 23025776,
+      "year": 2023
+    },
+    "858": {
+      "wikidata": "Q77",
+      "population": 3444263,
+      "year": 2023
+    },
+    "860": {
+      "wikidata": "Q265",
+      "population": 34915100,
+      "year": 2021
+    },
+    "862": {
+      "wikidata": "Q717",
+      "population": 31250306,
+      "year": 2024
+    },
+    "876": {
+      "wikidata": "Q35555",
+      "population": 11558,
+      "year": 2018
+    },
+    "882": {
+      "wikidata": "Q683",
+      "population": 200010,
+      "year": 2021
+    },
+    "887": {
+      "wikidata": "Q805",
+      "population": 34400000,
+      "year": 2026
+    },
+    "894": {
+      "wikidata": "Q953",
+      "population": 19610769,
+      "year": 2022
+    },
+    "004": {
+      "wikidata": "Q889",
+      "population": 41454761,
+      "year": 2023
+    },
+    "008": {
+      "wikidata": "Q222",
+      "population": 2811655,
+      "year": 2023
+    },
+    "010": {
+      "wikidata": "Q10372207",
+      "population": 4400,
+      "year": 2009
+    },
+    "012": {
+      "wikidata": "Q262",
+      "population": 45600000,
+      "year": 2026
+    },
+    "016": {
+      "wikidata": "Q16641",
+      "population": 49710,
+      "year": 2020
+    },
+    "020": {
+      "wikidata": "Q228",
+      "population": 89752,
+      "year": 2026
+    },
+    "024": {
+      "wikidata": "Q916",
+      "population": 36749906,
+      "year": 2023
+    },
+    "028": {
+      "wikidata": "Q781",
+      "population": 101489,
+      "year": 2023
+    },
+    "031": {
+      "wikidata": "Q227",
+      "population": 10180770,
+      "year": 2023
+    },
+    "032": {
+      "wikidata": "Q414",
+      "population": 47327407,
+      "year": 2022
+    },
+    "036": {
+      "wikidata": "Q408",
+      "population": 27614411,
+      "year": 2025
+    },
+    "040": {
+      "wikidata": "Q40",
+      "population": 8979894,
+      "year": 2022
+    },
+    "044": {
+      "wikidata": "Q778",
+      "population": 399440,
+      "year": 2023
+    },
+    "048": {
+      "wikidata": "Q398",
+      "population": 2700000,
+      "year": 2026
+    },
+    "050": {
+      "wikidata": "Q902",
+      "population": 175686899,
+      "year": 2025
+    },
+    "051": {
+      "wikidata": "Q399",
+      "population": 2930450,
+      "year": 2017
+    },
+    "052": {
+      "wikidata": "Q244",
+      "population": 303431,
+      "year": 2023
+    },
+    "056": {
+      "wikidata": "Q31",
+      "population": 11825551,
+      "year": 2025
+    },
+    "060": {
+      "wikidata": "Q23635",
+      "population": 65024,
+      "year": 2013
+    },
+    "064": {
+      "wikidata": "Q917",
+      "population": 796682,
+      "year": 2025
+    },
+    "068": {
+      "wikidata": "Q750",
+      "population": 12244159,
+      "year": 2023
+    },
+    "070": {
+      "wikidata": "Q225",
+      "population": 3816459,
+      "year": 2022
+    },
+    "072": {
+      "wikidata": "Q963",
+      "population": 2480244,
+      "year": 2023
+    },
+    "076": {
+      "wikidata": "Q155",
+      "population": 214211951,
+      "year": 2026
+    },
+    "084": {
+      "wikidata": "Q242",
+      "population": 411106,
+      "year": 2023
+    },
+    "086": {
+      "wikidata": "Q43448",
+      "population": 3000,
+      "year": 2018
+    },
+    "090": {
+      "wikidata": "Q685",
+      "population": 611343,
+      "year": 2017
+    },
+    "092": {
+      "wikidata": "Q25305",
+      "population": 39369,
+      "year": 2023
+    },
+    "096": {
+      "wikidata": "Q921",
+      "population": 458949,
+      "year": 2023
+    }
+  },
+  "states": {
+    "10": {
+      "wikidata": "Q1393",
+      "population": 989948,
+      "year": 2020
+    },
+    "12": {
+      "wikidata": "Q812",
+      "population": 21538187,
+      "year": 2020
+    },
+    "13": {
+      "wikidata": "Q1428",
+      "population": 10711908,
+      "year": 2020
+    },
+    "15": {
+      "wikidata": "Q782",
+      "population": 1455271,
+      "year": 2020
+    },
+    "16": {
+      "wikidata": "Q1221",
+      "population": 1839106,
+      "year": 2020
+    },
+    "17": {
+      "wikidata": "Q1204",
+      "population": 12719141,
+      "year": 2025
+    },
+    "18": {
+      "wikidata": "Q1415",
+      "population": 6785528,
+      "year": 2020
+    },
+    "19": {
+      "wikidata": "Q1546",
+      "population": 3190369,
+      "year": 2020
+    },
+    "20": {
+      "wikidata": "Q1558",
+      "population": 2937880,
+      "year": 2020
+    },
+    "21": {
+      "wikidata": "Q1603",
+      "population": 4505836,
+      "year": 2020
+    },
+    "22": {
+      "wikidata": "Q1588",
+      "population": 4657757,
+      "year": 2020
+    },
+    "23": {
+      "wikidata": "Q724",
+      "population": 1362359,
+      "year": 2020
+    },
+    "24": {
+      "wikidata": "Q1391",
+      "population": 6165129,
+      "year": 2021
+    },
+    "25": {
+      "wikidata": "Q771",
+      "population": 7029917,
+      "year": 2020
+    },
+    "26": {
+      "wikidata": "Q1166",
+      "population": 10077331,
+      "year": 2020
+    },
+    "27": {
+      "wikidata": "Q1527",
+      "population": 5706494,
+      "year": 2020
+    },
+    "28": {
+      "wikidata": "Q1494",
+      "population": 2961279,
+      "year": 2020
+    },
+    "29": {
+      "wikidata": "Q1581",
+      "population": 6154913,
+      "year": 2020
+    },
+    "30": {
+      "wikidata": "Q1212",
+      "population": 1084225,
+      "year": 2020
+    },
+    "31": {
+      "wikidata": "Q1553",
+      "population": 1961504,
+      "year": 2020
+    },
+    "32": {
+      "wikidata": "Q1227",
+      "population": 3104614,
+      "year": 2020
+    },
+    "33": {
+      "wikidata": "Q759",
+      "population": 1377529,
+      "year": 2020
+    },
+    "34": {
+      "wikidata": "Q1408",
+      "population": 9288994,
+      "year": 2020
+    },
+    "35": {
+      "wikidata": "Q1522",
+      "population": 2117522,
+      "year": 2020
+    },
+    "36": {
+      "wikidata": "Q1384",
+      "population": 20201249,
+      "year": 2020
+    },
+    "37": {
+      "wikidata": "Q1454",
+      "population": 10439388,
+      "year": 2020
+    },
+    "38": {
+      "wikidata": "Q1207",
+      "population": 779094,
+      "year": 2020
+    },
+    "39": {
+      "wikidata": "Q1397",
+      "population": 11799448,
+      "year": 2020
+    },
+    "40": {
+      "wikidata": "Q1649",
+      "population": 3959353,
+      "year": 2020
+    },
+    "41": {
+      "wikidata": "Q824",
+      "population": 4237256,
+      "year": 2020
+    },
+    "42": {
+      "wikidata": "Q1400",
+      "population": 13002700,
+      "year": 2020
+    },
+    "44": {
+      "wikidata": "Q1387",
+      "population": 1097379,
+      "year": 2020
+    },
+    "45": {
+      "wikidata": "Q1456",
+      "population": 5118425,
+      "year": 2020
+    },
+    "46": {
+      "wikidata": "Q1211",
+      "population": 886667,
+      "year": 2020
+    },
+    "47": {
+      "wikidata": "Q1509",
+      "population": 6910840,
+      "year": 2020
+    },
+    "48": {
+      "wikidata": "Q1439",
+      "population": 29145505,
+      "year": 2020
+    },
+    "49": {
+      "wikidata": "Q829",
+      "population": 3271616,
+      "year": 2020
+    },
+    "50": {
+      "wikidata": "Q16551",
+      "population": 643077,
+      "year": 2020
+    },
+    "51": {
+      "wikidata": "Q1370",
+      "population": 8631393,
+      "year": 2020
+    },
+    "53": {
+      "wikidata": "Q1223",
+      "population": 7705281,
+      "year": 2020
+    },
+    "54": {
+      "wikidata": "Q1371",
+      "population": 1793716,
+      "year": 2020
+    },
+    "55": {
+      "wikidata": "Q1537",
+      "population": 5893718,
+      "year": 2020
+    },
+    "56": {
+      "wikidata": "Q1214",
+      "population": 576851,
+      "year": 2020
+    },
+    "01": {
+      "wikidata": "Q173",
+      "population": 5024279,
+      "year": 2020
+    },
+    "02": {
+      "wikidata": "Q797",
+      "population": 733391,
+      "year": 2020
+    },
+    "04": {
+      "wikidata": "Q816",
+      "population": 7151502,
+      "year": 2020
+    },
+    "05": {
+      "wikidata": "Q1612",
+      "population": 3011524,
+      "year": 2020
+    },
+    "06": {
+      "wikidata": "Q99",
+      "population": 39538223,
+      "year": 2020
+    },
+    "08": {
+      "wikidata": "Q1261",
+      "population": 5773714,
+      "year": 2020
+    },
+    "09": {
+      "wikidata": "Q779",
+      "population": 3605944,
+      "year": 2020
+    }
+  }
+}

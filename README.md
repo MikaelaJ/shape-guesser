@@ -40,6 +40,7 @@ What it doesn't do: the game is about recognising a *visual* shape, so it isn't 
 - **Three.js via react-three-fiber** (and drei for the fat animated line)
 - **d3-geo** for projections, distances, point-in-country tests and great-circle arcs
 - **Country borders:** [Natural Earth](https://www.naturalearthdata.com/) 1:50m (public domain), via the [world-atlas](https://github.com/topojson/world-atlas) package
+- **Population:** [Wikidata](https://www.wikidata.org) (CC0), fetched by `scripts/fetch-population.mjs` into `src/data/population.json`. Each clue shows the year of its figure, since Wikidata's newest number varies by country (from 2017 to this year)
 - **US states:** US Census Bureau boundaries (public domain), via the [us-atlas](https://github.com/topojson/us-atlas) package. The 50 states, without DC and the overseas territories
 
 ### How it fits together
@@ -51,7 +52,8 @@ What it doesn't do: the game is about recognising a *visual* shape, so it isn't 
 | `src/view.ts` | The camera model, and picking: which point on the globe is under the pointer |
 | `src/Globe.tsx` | The 3D scene: textured globe, highlight, fresnel atmosphere, markers, animated arc |
 | `src/App.tsx` | Game flow, keyboard and pointer input, announcements, focus management |
-| `src/facts.ts` | Clues: population and part of the world for every country and state |
+| `src/facts.ts` | Clues: population (from Wikidata) and a hand-written part of the world for every country and state |
+| `scripts/fetch-population.mjs` | Fetches the latest population of every country and state from Wikidata |
 | `src/Silhouette.tsx` | The country outline, on an azimuthal equal-area projection centred on it |
 
 Some decisions worth explaining:
@@ -62,6 +64,7 @@ Some decisions worth explaining:
 - **Borders are real 3D lines, not part of the texture.** Painted into the image they got thick and blurry when zoomed in; as line geometry the GPU draws them 1 px wide at any zoom. The globe surface uses a small polygon offset so the lines just above it don't flicker.
 - **Zoom is proportional:** each step multiplies the camera's height above the surface, so it feels the same far out and close in. Pins shrink as you zoom so they don't cover small countries.
 - **One clock for both timer settings.** A clue isn't free: asking for it moves the round's clock forward to when it would have appeared. That's what keeps "take every clue straight away" from being the best strategy, and lets the timer-off mode share the same scoring.
+- **Population is fetched at build time, not in the browser.** A script asks Wikidata's query service for every population figure and keeps the newest per place; the result is committed. The game stays fast and keeps working if Wikidata is down, and `pnpm data:population` refreshes it. Places are matched by code, not name (ISO 3166-1 numeric for countries, [P299](https://www.wikidata.org/wiki/Property:P299); FIPS for states, [P5087](https://www.wikidata.org/wiki/Property:P5087)), so Sweden is 752, [Q34](https://www.wikidata.org/wiki/Q34). One exception is set by hand: ISO 528 belongs to the Kingdom of the Netherlands, but the map shape is the country in Europe ([Q55](https://www.wikidata.org/wiki/Q55)).
 - **The daily challenge** uses a seeded random number generator keyed on the date, so everyone gets the same five countries without a server.
 - **Countries and states are one pool of shapes.** The only differences are the score scale and the name: states are shown as "Georgia, USA", so Georgia the state can't be confused with Georgia the country. Another set, like Swedish counties, would just be added to the pool.
 - **State lines are drawn once:** topojson's `mesh` gives only the lines between neighbouring states, so shared borders aren't drawn twice and coastlines come from the country data.
@@ -69,7 +72,6 @@ Some decisions worth explaining:
 
 ## What I'd do next
 
-- Check the population figures against a single source and note its year (they're rounded estimates: about 2023 for countries, the 2020 census for states)
 
 - A small backend for a daily leaderboard (a serverless function and a tiny database)
 - Difficulty levels, e.g. continents first, small countries later
@@ -99,4 +101,4 @@ Then open http://localhost:5173/shape-guesser/. `pnpm build` makes a static buil
 
 ## Credits
 
-Country borders: Natural Earth, public domain. US states: US Census Bureau, public domain. Not affiliated with GeoGuessr.
+Country borders: Natural Earth, public domain. US states: US Census Bureau, public domain. Population: Wikidata, CC0. Not affiliated with GeoGuessr.

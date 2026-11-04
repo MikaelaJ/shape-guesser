@@ -516,6 +516,11 @@ export default function App() {
               </li>
             </ul>
           </details>
+          <p className="sources">
+            Population from <a href="https://www.wikidata.org">Wikidata</a>. Borders from{' '}
+            <a href="https://www.naturalearthdata.com">Natural Earth</a> and the{' '}
+            <a href="https://www.census.gov">US Census Bureau</a>. All public domain.
+          </p>
         </section>
       )}
 
