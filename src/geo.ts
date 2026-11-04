@@ -1,8 +1,13 @@
 import { geoArea, geoCentroid, geoContains, geoDistance, geoInterpolate } from 'd3-geo'
 import type { Feature, FeatureCollection, MultiPolygon, Polygon, Position } from 'geojson'
 import { Vector3 } from 'three'
-import { feature, mesh } from 'topojson-client'
-import type { GeometryCollection, Topology } from 'topojson-specification'
+import { feature, merge, mesh } from 'topojson-client'
+import type {
+  GeometryCollection,
+  MultiPolygon as TopoMultiPolygon,
+  Polygon as TopoPolygonObject,
+  Topology,
+} from 'topojson-specification'
 import usAtlas from 'us-atlas/states-10m.json'
 import world from 'world-atlas/countries-50m.json'
 
@@ -14,11 +19,66 @@ type Places = FeatureCollection<Polygon | MultiPolygon, { name: string }>
 // package. 1:50m is detailed enough for recognisable silhouettes.
 const topology = world as unknown as Topology<{ countries: GeometryCollection<{ name: string }> }>
 
-export const countries = (feature(topology, topology.objects.countries) as Places).features
+// Two changes to Russia's shape in the map data, which includes both:
+// - Crimea is shown as part of Ukraine, as recognised internationally (UN
+//   General Assembly resolution 68/262). It's merged into Ukraine's
+//   outline, so no border is left across the isthmus.
+// - Kaliningrad, the exclave on the Baltic, stays on the map as land of
+//   its own but isn't part of Russia's outline, so the shape asked about
+//   is the main part of the country.
+type TopoPolygon = { type: 'Polygon'; arcs: number[][] }
+type TopoCountry = {
+  type: 'MultiPolygon'
+  arcs: number[][][]
+  id?: string
+  properties: { name: string }
+}
+const asFeature = (geometry: TopoPolygon | TopoCountry) =>
+  feature(topology, geometry as Parameters<typeof feature>[1]) as Place
+
+function redrawRussia(all: Place[]): Place[] {
+  const geometries = topology.objects.countries.geometries as unknown as TopoCountry[]
+  const russia = geometries.find((g) => g.properties.name === 'Russia')!
+  const ukraine = geometries.find((g) => g.properties.name === 'Ukraine')!
+  const pieceAt = (lon: number, lat: number) =>
+    russia.arcs.findIndex((arcs) =>
+      geoContains(asFeature({ type: 'Polygon', arcs }), [lon, lat]),
+    )
+  const crimea = pieceAt(34.1, 44.95) // Simferopol
+  const kaliningrad = pieceAt(20.5, 54.7) // Kaliningrad city
+
+  const mainland = asFeature({
+    ...russia,
+    arcs: russia.arcs.filter((_, i) => i !== crimea && i !== kaliningrad),
+  })
+  const ukraineWithCrimea = merge(topology, [
+    ukraine as unknown as TopoMultiPolygon,
+    { type: 'Polygon', arcs: russia.arcs[crimea] } as TopoPolygonObject,
+  ])
+  const exclave: Place = {
+    ...asFeature({ type: 'Polygon', arcs: russia.arcs[kaliningrad] }),
+    properties: { name: 'Kaliningrad' },
+  }
+
+  return [
+    ...all.map((c) =>
+      c.properties.name === 'Russia'
+        ? mainland
+        : c.properties.name === 'Ukraine'
+          ? { ...c, geometry: ukraineWithCrimea }
+          : c,
+    ),
+    exclave,
+  ]
+}
+
+export const countries = redrawRussia(
+  (feature(topology, topology.objects.countries) as Places).features,
+)
 
 // Countries big enough to guess from their outline. geoArea is in
 // steradians: 0.0008 is roughly 32 000 km2, about the size of Belgium.
-// Left out: Antarctica, and disputed areas the data draws as separate
+// Left out: Antarctica, Kaliningrad (see above), and disputed areas the data draws as separate
 // shapes, so the game doesn't take a side. They still appear on the map.
 const notAsked = new Set([
   'Antarctica',
@@ -26,6 +86,7 @@ const notAsked = new Set([
   'W. Sahara',
   'Somaliland',
   'N. Cyprus',
+  'Kaliningrad',
 ])
 export const playableCountries = countries.filter(
   (c) => !notAsked.has(c.properties.name) && geoArea(c) > 0.0008,
