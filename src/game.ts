@@ -1,9 +1,18 @@
-import { playableCountries, type Country } from './geo'
+import { allPlaces, type Place } from './geo'
 
 export const ROUNDS = 5
 
+// Seconds per round, and when each clue appears
+export const ROUND_SECONDS = 60
+export const CLUE_TIMES = [15, 30, 45]
+
+// The faster you guess, the more of the points you keep: all of them
+// straight away, half when the time runs out
+export const speedFactor = (seconds: number) =>
+  1 - (0.5 * Math.min(seconds, ROUND_SECONDS)) / ROUND_SECONDS
+
 // Small seeded random number generator (mulberry32), so the daily
-// challenge gives everyone the same five countries without a backend.
+// challenge gives everyone the same five places without a backend.
 function seededRandom(seed: number) {
   return () => {
     seed |= 0
@@ -25,9 +34,9 @@ export function todayKey(date = new Date()) {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
 }
 
-export function pickCountries(seed: string | null): Country[] {
+export function pickPlaces(seed: string | null): Place[] {
   const random = seed ? seededRandom(hash(seed)) : Math.random
-  const pool = [...playableCountries]
+  const pool = [...allPlaces]
   // Partial Fisher-Yates shuffle: only the first ROUNDS are needed
   for (let i = 0; i < ROUNDS; i++) {
     const j = i + Math.floor(random() * (pool.length - i))

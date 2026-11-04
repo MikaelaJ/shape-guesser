@@ -75,7 +75,8 @@ button.primary:hover:not(:disabled) {
   border-color: var(--text);
 }
 button.primary:disabled {
-  background: transparent;
+  background: var(--panel);
+  backdrop-filter: blur(8px);
   border-color: var(--line);
   color: var(--muted);
 }
@@ -115,6 +116,15 @@ button.primary:disabled {
 .topbar > * {
   pointer-events: auto;
 }
+/* The header sits over the globe, which can be light land when zoomed in,
+   so it gets its own dark background */
+.brand {
+  background: var(--panel);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0.35rem 1rem;
+}
 .brand {
   margin: 0;
   font-family: var(--display);
@@ -128,7 +138,13 @@ button.primary:disabled {
   color: var(--muted);
   margin-left: 0.6rem;
 }
+.settings {
+  display: flex;
+  gap: 0.5rem;
+}
 .chip-button {
+  background: var(--panel);
+  backdrop-filter: blur(8px);
   min-height: 36px;
   padding: 0.3rem 0.9rem;
   font-size: 0.85rem;
@@ -228,6 +244,11 @@ button.primary:disabled {
   margin: 0.5rem 0 0;
   padding-left: 1.1rem;
 }
+.sources {
+  margin: 1rem 0 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
 .how strong {
   color: var(--text);
   font-weight: 500;
@@ -253,6 +274,47 @@ button.primary:disabled {
   margin: 0.5rem 0 0;
   font-family: var(--display);
   font-size: 1.3rem;
+}
+
+/* Time left, as a bar that shrinks */
+.clock {
+  height: 4px;
+  margin-top: 0.75rem;
+  border-radius: 999px;
+  background: var(--line);
+  overflow: hidden;
+}
+.clock-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: inherit;
+}
+.speed {
+  margin: 0.4rem 0 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+}
+.clues {
+  margin: 0.75rem 0 0;
+  text-align: left;
+  border-top: 1px solid var(--line);
+}
+.clues div {
+  padding: 0.4rem 0;
+  border-bottom: 1px solid var(--line);
+  animation: rise 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.clues dt {
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+.clues dd {
+  margin: 0;
+  font-size: 0.95rem;
+}
+.clue-button {
+  margin-top: 0.75rem;
 }
 
 .guess-bar {
@@ -352,6 +414,26 @@ button.primary:disabled {
   font-variant-numeric: tabular-nums;
 }
 
+.zoom {
+  position: absolute;
+  z-index: 1;
+  right: 1.25rem;
+  top: 50%;
+  translate: 0 -50%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.zoom button {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  font-size: 1.4rem;
+  line-height: 1;
+  background: var(--panel);
+  backdrop-filter: blur(8px);
+}
+
 /* Phones: panels stack at the top and bottom instead of floating aside */
 @media (max-width: 640px) {
   .byline {
@@ -367,6 +449,12 @@ button.primary:disabled {
   .prompt {
     font-size: 1.05rem;
   }
+  .round .silhouette {
+    max-height: 7rem;
+  }
+  .clues dd {
+    font-size: 0.85rem;
+  }
   .reveal {
     left: 1rem;
     right: 1rem;
@@ -379,7 +467,8 @@ button.primary:disabled {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .panel {
+  .panel,
+  .clues div {
     animation: none;
   }
   button,

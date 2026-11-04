@@ -3,15 +3,30 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { geoEquirectangular, geoGraticule10, geoPath } from 'd3-geo'
 import { useMemo, useRef, type ComponentRef, type RefObject } from 'react'
 import * as THREE from 'three'
-import { arcPoints, countries, toVector, type Country, type LatLon } from './geo'
+import type { Position } from 'geojson'
+import {
+  arcPoints,
+  countries,
+  isState,
+  lakes,
+  stateBorders,
+  toVector,
+  type Place,
+  type LatLon,
+} from './geo'
 import { FOV, colors, type View } from './view'
 
 // Countries drawn onto an equirectangular canvas, which three.js wraps
 // around the sphere. Drawn once.
+// Twice the resolution (8192 px wide) when the graphics card supports it
+// and the screen is big, so close zoom stays crisp. Phones keep 4096, which
+// is kinder to their memory.
 function useGlobeTexture() {
+  const maxSize = useThree((state) => state.gl.capabilities.maxTextureSize)
   return useMemo(() => {
-    const width = 4096
-    const height = 2048
+    const width = maxSize >= 8192 && window.innerWidth >= 900 ? 8192 : 4096
+    const height = width / 2
+    const line = width / 4096
     const canvas = document.createElement('canvas')
     canvas.width = width
     canvas.height = height
@@ -27,33 +42,39 @@ function useGlobeTexture() {
     ctx.beginPath()
     path(geoGraticule10())
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.07)'
-    ctx.lineWidth = 2
+    ctx.lineWidth = 2 * line
     ctx.stroke()
 
+    // Land only; borders are drawn as 3D lines (see Borders) so they stay
+    // thin and sharp however far you zoom in
     ctx.fillStyle = colors.land
-    ctx.strokeStyle = colors.border
-    ctx.lineWidth = 1.5
     for (const country of countries) {
       ctx.beginPath()
       path(country)
       ctx.fill()
-      ctx.stroke()
+    }
+    // Lakes cut back out of the land
+    ctx.fillStyle = colors.ocean
+    for (const lake of lakes) {
+      ctx.beginPath()
+      path(lake)
+      ctx.fill()
     }
 
     const texture = new THREE.CanvasTexture(canvas)
     texture.colorSpace = THREE.SRGBColorSpace
     texture.anisotropy = 8
     return texture
-  }, [])
+  }, [maxSize])
 }
 
-// The answer country filled in the accent colour, on a transparent canvas
-// laid just above the globe
-function useHighlightTexture(country: Country | null) {
+// The answer filled in the accent colour, on a transparent canvas laid just
+// above the globe. States are small, so they get a sharper canvas.
+function useHighlightTexture(country: Place | null) {
   return useMemo(() => {
     if (!country) return null
-    const width = 2048
-    const height = 1024
+    const width = country && isState(country) ? 4096 : 2048
+    const height = width / 2
     const canvas = document.createElement('canvas')
     canvas.width = width
     canvas.height = height
@@ -72,6 +93,44 @@ function useHighlightTexture(country: Country | null) {
     texture.colorSpace = THREE.SRGBColorSpace
     return texture
   }, [country])
+}
+
+// Lines of lon/lat points as line segments just above the surface
+function linesGeometry(lines: Position[][]) {
+  const positions: number[] = []
+  for (const line of lines) {
+    for (let i = 1; i < line.length; i++) {
+      const a = toVector({ lon: line[i - 1][0], lat: line[i - 1][1] }, 1.0015)
+      const b = toVector({ lon: line[i][0], lat: line[i][1] }, 1.0015)
+      positions.push(a.x, a.y, a.z, b.x, b.y, b.z)
+    }
+  }
+  const g = new THREE.BufferGeometry()
+  g.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3))
+  return g
+}
+
+const outlines = (places: Place[]) =>
+  places.flatMap((place) =>
+    place.geometry.type === 'Polygon' ? place.geometry.coordinates : place.geometry.coordinates.flat(),
+  )
+
+// Every country outline, lake shore and US state line, as 3D lines. Lines are drawn by the GPU at a fixed 1 px width, so unlike
+// borders painted into the texture they don't get thick and blurry when
+// zoomed in.
+function Borders() {
+  const countryGeometry = useMemo(() => linesGeometry([...outlines(countries), ...outlines(lakes)]), [])
+  const stateGeometry = useMemo(() => linesGeometry(stateBorders.coordinates), [])
+  return (
+    <>
+      <lineSegments geometry={countryGeometry}>
+        <lineBasicMaterial color={colors.border} />
+      </lineSegments>
+      <lineSegments geometry={stateGeometry}>
+        <lineBasicMaterial color={colors.border} transparent opacity={0.6} />
+      </lineSegments>
+    </>
+  )
 }
 
 // Shortest way round: going from 170° to -170° should be 20°, not 340°
@@ -136,10 +195,17 @@ function Atmosphere() {
   )
 }
 
-function Marker({ at, color }: { at: LatLon; color: string }) {
+// Pins shrink as you zoom in, so they stay about the same size on screen
+// instead of covering a small country
+function Marker({ at, color, view }: { at: LatLon; color: string; view: RefObject<View> }) {
   const position = useMemo(() => toVector(at, 1.004), [at])
+  const mesh = useRef<THREE.Mesh>(null)
+  useFrame(() => {
+    const scale = Math.min(1, Math.max(0.12, (view.current.dist - 1) / 2))
+    mesh.current?.scale.setScalar(scale)
+  })
   return (
-    <mesh position={position}>
+    <mesh ref={mesh} position={position}>
       <sphereGeometry args={[0.014, 24, 24]} />
       <meshBasicMaterial color={color} />
     </mesh>
@@ -183,7 +249,8 @@ type GlobeProps = {
   view: RefObject<View>
   reducedMotion: boolean
   pin: LatLon | null
-  reveal: { guess: LatLon; nearest: LatLon; country: Country } | null
+  // guess and nearest are null when the time ran out without a pin
+  reveal: { guess: LatLon | null; nearest: LatLon | null; country: Place } | null
 }
 
 function Scene({ view, reducedMotion, pin, reveal }: GlobeProps) {
@@ -197,7 +264,16 @@ function Scene({ view, reducedMotion, pin, reveal }: GlobeProps) {
       {/* Clicks are handled in App with pickOnGlobe, not by three.js events */}
       <mesh>
         <sphereGeometry args={[1, 128, 128]} />
-        <meshStandardMaterial map={texture} roughness={0.9} metalness={0} />
+        {/* polygonOffset nudges the surface back in the depth buffer, so the
+            border lines just above it never flicker ("z-fighting") */}
+        <meshStandardMaterial
+          map={texture}
+          roughness={0.9}
+          metalness={0}
+          polygonOffset
+          polygonOffsetFactor={1}
+          polygonOffsetUnits={1}
+        />
       </mesh>
       {highlight && (
         <mesh scale={1.0015}>
@@ -205,12 +281,15 @@ function Scene({ view, reducedMotion, pin, reveal }: GlobeProps) {
           <meshBasicMaterial map={highlight} transparent opacity={0.9} depthWrite={false} />
         </mesh>
       )}
+      <Borders />
       <Atmosphere />
-      {pin && <Marker at={pin} color={colors.accent} />}
+      {pin && <Marker at={pin} color={colors.accent} view={view} />}
       {reveal && (
         <>
-          <Marker at={reveal.nearest} color={colors.answer} />
-          <Arc from={reveal.guess} to={reveal.nearest} reducedMotion={reducedMotion} />
+          {reveal.nearest && <Marker at={reveal.nearest} color={colors.answer} view={view} />}
+          {reveal.guess && reveal.nearest && (
+            <Arc from={reveal.guess} to={reveal.nearest} reducedMotion={reducedMotion} />
+          )}
         </>
       )}
     </>

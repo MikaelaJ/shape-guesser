@@ -27,8 +27,21 @@ export type View = {
   spin: boolean
 }
 
-export const MIN_DIST = 1.6
+// Camera distance from the globe's centre (the globe's radius is 1).
+// At 1.25 about 1 200 km fits across the screen: close enough to aim at
+// the smallest countries in the game, before the map gets blurry.
+export const MIN_DIST = 1.25
 export const MAX_DIST = 4
+
+// Zoom by a factor of the distance to the surface rather than a fixed
+// amount, so each step feels the same far out and close in.
+// factor < 1 zooms in, > 1 zooms out. Zooming also stops the idle spin.
+export const ZOOM_STEP = 1.35
+export function zoomBy(view: View, factor: number) {
+  view.spin = false
+  const height = (view.targetDist - 1) * factor
+  view.targetDist = 1 + Math.min(MAX_DIST - 1, Math.max(MIN_DIST - 1, height))
+}
 export const clampLat = (lat: number) => Math.max(-80, Math.min(80, lat))
 
 export const FOV = 40

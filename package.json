@@ -1,5 +1,5 @@
 {
-  "name": "shape-guesser",
+  "name": "outlinr",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "data:population": "node scripts/fetch-population.mjs",
+    "data:lakes": "node scripts/fetch-lakes.mjs"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.9",
@@ -17,6 +19,7 @@
     "react-dom": "^19.3.1",
     "three": "^0.186.1",
     "topojson-client": "^3.1.0",
+    "us-atlas": "^3.0.1",
     "world-atlas": "^2.0.2"
   },
   "devDependencies": {

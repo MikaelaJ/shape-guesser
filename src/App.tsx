@@ -7,37 +7,85 @@ import {
   type RefObject,
   type WheelEvent,
 } from 'react'
-import { ROUNDS, pickCountries, scoreSquare, todayKey } from './game'
+import { cluesFor } from './facts'
+import {
+  CLUE_TIMES,
+  ROUNDS,
+  ROUND_SECONDS,
+  pickPlaces,
+  scoreSquare,
+  speedFactor,
+  todayKey,
+} from './game'
 import {
   MAX_SCORE,
   angleBetween,
-  distanceToCountry,
+  distanceToPlace,
+  geoCentre,
+  isState,
+  scoreScaleFor,
   formatKm,
   formatLatLon,
   midpoint,
   scoreFor,
-  countryName,
-  type Country,
+  placeName,
+  type Place,
   type LatLon,
 } from './geo'
 import { Globe } from './Globe'
 import { useCountUp, useReducedMotion, useStoredBoolean } from './hooks'
 import { Silhouette } from './Silhouette'
+import { music } from './music'
 import { sounds } from './sound'
-import { MAX_DIST, MIN_DIST, clampLat, pickOnGlobe, type View } from './view'
+import {
+  MAX_DIST,
+  MIN_DIST,
+  ZOOM_STEP,
+  clampLat,
+  pickOnGlobe,
+  zoomBy,
+  type View,
+} from './view'
 
 type Phase = 'intro' | 'guessing' | 'reveal' | 'summary'
-type Result = { country: Country; guess: LatLon; nearest: LatLon; km: number; score: number }
+// guess, nearest and km are null when the time ran out without a pin
+type Result = {
+  country: Place
+  guess: LatLon | null
+  nearest: LatLon | null
+  km: number | null
+  seconds: number
+  score: number
+}
 
 const PORTFOLIO_URL = 'https://mikaelajohansson.com/'
-const GAME_URL = 'https://mikaelajohansson.com/shape-guesser/'
+const GAME_URL = 'https://mikaelajohansson.com/outlinr/'
 
 const normaliseLon = (lon: number) => ((((lon + 180) % 360) + 360) % 360) - 180
+
+// Distance between the first two touch points, for pinch zoom
+function spread(pointers: Map<number, { x: number; y: number }>) {
+  const [a, b] = [...pointers.values()]
+  return a && b ? Math.hypot(a.x - b.x, a.y - b.y) : 0
+}
 const points = (n: number) => n.toLocaleString('en-GB')
+const percent = (factor: number) => `${Math.round(factor * 100)} %`
 
 export default function App() {
   const reducedMotion = useReducedMotion()
   const [soundOn, setSoundOn] = useStoredBoolean('shape-guesser:sound', true)
+  const [timerOn, setTimerOn] = useStoredBoolean('shape-guesser:timer', true)
+  const [musicOn, setMusicOn] = useStoredBoolean('shape-guesser:music', true)
+  // Music never starts by itself on page load, only once the player has
+  // pressed Play or the Music button
+  const [musicStarted, setMusicStarted] = useState(false)
+  useEffect(() => {
+    const update = () =>
+      musicOn && musicStarted && !document.hidden ? music.play() : music.pause(document.hidden)
+    update()
+    document.addEventListener('visibilitychange', update)
+    return () => document.removeEventListener('visibilitychange', update)
+  }, [musicOn, musicStarted])
   const view = useRef<View>({
     lat: 20,
     lon: 10,
@@ -50,11 +98,15 @@ export default function App() {
 
   const [phase, setPhase] = useState<Phase>('intro')
   const [daily, setDaily] = useState(true)
-  const [rounds, setRounds] = useState<Country[]>([])
+  const [rounds, setRounds] = useState<Place[]>([])
   const [round, setRound] = useState(0)
   const [pin, setPin] = useState<LatLon | null>(null)
   const [results, setResults] = useState<Result[]>([])
   const [announcement, setAnnouncement] = useState('')
+  // Seconds into the round. The ref is the source of truth for the game
+  // logic; the state is for showing it.
+  const clock = useRef(0)
+  const [elapsed, setElapsed] = useState(0)
 
   // The pointer-up handler outlives the render it was created in, so it
   // reads the phase from a ref rather than a stale closure
@@ -84,6 +136,8 @@ export default function App() {
   const total = results.reduce((sum, r) => sum + r.score, 0)
   const current = rounds[round]
   const lastResult = results[results.length - 1]
+  const clues = current ? cluesFor(current) : []
+  const cluesShown = CLUE_TIMES.filter((at) => elapsed >= at).length
 
   // Move keyboard focus to wherever the player needs to act next
   useEffect(() => {
@@ -93,14 +147,16 @@ export default function App() {
   }, [phase, round])
 
   const roundPrompt = (n: number) =>
-    `Round ${n} of ${ROUNDS}. Which country has this shape? Find it on the globe.`
+    `Round ${n} of ${ROUNDS}. Where is this shape? It's a country or a US state. Find it on the globe.`
 
   function start(isDaily: boolean) {
+    setMusicStarted(true)
     setDaily(isDaily)
-    setRounds(pickCountries(isDaily ? todayKey() : null))
+    setRounds(pickPlaces(isDaily ? todayKey() : null))
     setRound(0)
     setResults([])
     setPin(null)
+    resetClock()
     setPhase('guessing')
     view.current.spin = false
     view.current.targetDist = 3
@@ -115,27 +171,102 @@ export default function App() {
 
   function guess(point: LatLon | null = pin) {
     if (!point || !current) return
-    const { km, nearest } = distanceToCountry(current, point)
-    const score = scoreFor(km)
+    const seconds = clock.current
+    const { km, nearest } = distanceToPlace(current, point)
+    const score = Math.round(scoreFor(km, scoreScaleFor(current)) * speedFactor(seconds))
     setPin(point)
-    setResults((r) => [...r, { country: current, guess: point, nearest, km, score }])
+    setResults((r) => [...r, { country: current, guess: point, nearest, km, seconds, score }])
     setPhase('reveal')
+    phaseRef.current = 'reveal'
 
     // Fly the camera out to see both the guess and the answer
     const centre = midpoint(point, nearest)
     const v = view.current
     v.targetLat = clampLat(centre.lat)
     v.targetLon = centre.lon
-    v.targetDist = Math.min(Math.max(2.2 + angleBetween(point, nearest) * 1.2, MIN_DIST), MAX_DIST)
+    const base = isState(current) ? 1.6 : 2.2
+    v.targetDist = Math.min(Math.max(base + angleBetween(point, nearest) * 1.2, MIN_DIST), MAX_DIST)
 
     play(() => sounds.reveal(score))
-    const name = countryName(current)
+    const name = placeName(current)
     announce(
       km === 0
-        ? `Spot on, that's inside ${name}! ${score} points.`
-        : `It was ${name}. You were ${formatKm(km)} away. ${score} points.`,
+        ? `Spot on, that's inside ${name}! ${Math.round(seconds)} seconds. ${score} points.`
+        : `It was ${name}. You were ${formatKm(km)} away, after ${Math.round(seconds)} seconds. ${score} points.`,
     )
   }
+
+  // Out of time: a dropped pin counts as the guess, otherwise no points
+  function timeUp() {
+    if (!current) return
+    if (pin) {
+      guess(pin)
+      return
+    }
+    setResults((r) => [
+      ...r,
+      { country: current, guess: null, nearest: null, km: null, seconds: ROUND_SECONDS, score: 0 },
+    ])
+    setPhase('reveal')
+    phaseRef.current = 'reveal'
+    const centre = geoCentre(current)
+    const v = view.current
+    v.targetLat = clampLat(centre.lat)
+    v.targetLon = centre.lon
+    v.targetDist = isState(current) ? 1.6 : 2.2
+    play(() => sounds.reveal(0))
+    announce(`Time's up! It was ${placeName(current)}. 0 points.`)
+  }
+
+  function resetClock() {
+    clock.current = 0
+    setElapsed(0)
+  }
+
+  // Moves the round's clock forward, by the timer or by asking for a clue,
+  // and gives out clues, the 10 second warning and the time-up as it goes
+  function advanceClock(to: number) {
+    if (phaseRef.current !== 'guessing' || !current) return
+    const from = clock.current
+    const now = Math.min(to, ROUND_SECONDS)
+    clock.current = now
+    setElapsed(now)
+    CLUE_TIMES.forEach((at, i) => {
+      const clue = clues[i]
+      if (clue && from < at && now >= at) {
+        play(sounds.pin)
+        announce(`Clue. ${clue.label}: ${clue.value}.`)
+      }
+    })
+    if (!timerOn) return
+    const warnAt = ROUND_SECONDS - 10
+    if (from < warnAt && now >= warnAt) announce('10 seconds left.')
+    if (now >= ROUND_SECONDS) timeUp()
+  }
+
+  function takeClue() {
+    const nextAt = CLUE_TIMES.find((at) => at > clock.current)
+    if (nextAt !== undefined) advanceClock(nextAt)
+  }
+
+  // The timer ticks only while guessing with the timer on, and not while
+  // the tab is hidden. A long gap between ticks (a sleeping laptop) counts
+  // as a quarter of a second, so nobody loses a round to it.
+  const advanceRef = useRef(advanceClock)
+  useEffect(() => {
+    advanceRef.current = advanceClock
+  })
+  useEffect(() => {
+    if (phase !== 'guessing' || !timerOn) return
+    let last = performance.now()
+    const timer = setInterval(() => {
+      const now = performance.now()
+      const delta = Math.min(now - last, 250) / 1000
+      last = now
+      if (!document.hidden) advanceRef.current(clock.current + delta)
+    }, 100)
+    return () => clearInterval(timer)
+  }, [phase, timerOn, round])
 
   function next() {
     if (round + 1 >= ROUNDS) {
@@ -148,6 +279,7 @@ export default function App() {
     }
     setRound(round + 1)
     setPin(null)
+    resetClock()
     setPhase('guessing')
     announce(roundPrompt(round + 2))
   }
@@ -174,10 +306,14 @@ export default function App() {
         break
       case '+':
       case '=':
-        v.targetDist = Math.max(MIN_DIST, v.targetDist - 0.3)
+        zoomBy(v, 1 / ZOOM_STEP)
         break
       case '-':
-        v.targetDist = Math.min(MAX_DIST, v.targetDist + 0.3)
+        zoomBy(v, ZOOM_STEP)
+        break
+      case 'c':
+      case 'C':
+        takeClue()
         break
       case ' ':
         placePin(centre())
@@ -191,29 +327,74 @@ export default function App() {
     event.preventDefault()
   }
 
-  // Drag to spin; a press that barely moves is a click, which drops a pin
-  // where the pointer is on the globe.
+  // Pointer gestures on the globe:
+  // - one pointer: drag to spin; a press that barely moves is a click,
+  //   which drops a pin where the pointer is
+  // - two pointers (touch): pinch to zoom
+  // Moves and releases are listened for on the window, so a drag keeps
+  // working when the pointer leaves the globe.
+  const gesture = useRef({
+    pointers: new Map<number, { x: number; y: number }>(),
+    startX: 0,
+    startY: 0,
+    pinched: false,
+    pinchSpread: 0,
+  })
+
   function onGlobePointerDown(event: PointerEvent<HTMLDivElement>) {
-    if (event.button !== 0) return
-    const rect = event.currentTarget.getBoundingClientRect()
-    const startX = event.clientX
-    const startY = event.clientY
-    let lastX = startX
-    let lastY = startY
+    if (event.pointerType === 'mouse' && event.button !== 0) return
+    const g = gesture.current
+    g.pointers.set(event.pointerId, { x: event.clientX, y: event.clientY })
+    if (g.pointers.size === 1) {
+      g.startX = event.clientX
+      g.startY = event.clientY
+      g.pinched = false
+    } else {
+      g.pinched = true
+      g.pinchSpread = spread(g.pointers)
+    }
     view.current.spin = false
+  }
+
+  // The window listeners outlive any single render, so they call the
+  // latest placePin through a ref
+  const placePinRef = useRef(placePin)
+  useEffect(() => {
+    placePinRef.current = placePin
+  })
+
+  useEffect(() => {
+    const g = gesture.current
     const move = (e: globalThis.PointerEvent) => {
+      const p = g.pointers.get(e.pointerId)
+      if (!p) return
       const v = view.current
+      const dx = e.clientX - p.x
+      const dy = e.clientY - p.y
+      p.x = e.clientX
+      p.y = e.clientY
+      if (g.pointers.size >= 2) {
+        const now = spread(g.pointers)
+        if (g.pinchSpread > 0 && now > 0) zoomBy(v, g.pinchSpread / now)
+        g.pinchSpread = now
+        return
+      }
+      // Spin speed follows the zoom, so the map moves with the pointer
       const k = 0.2 * ((v.dist - 0.8) / 2.2)
-      v.targetLon -= (e.clientX - lastX) * k
-      v.targetLat = clampLat(v.targetLat + (e.clientY - lastY) * k)
-      lastX = e.clientX
-      lastY = e.clientY
+      v.targetLon -= dx * k
+      v.targetLat = clampLat(v.targetLat + dy * k)
     }
     const up = (e: globalThis.PointerEvent) => {
-      window.removeEventListener('pointermove', move)
-      window.removeEventListener('pointerup', up)
-      const moved = Math.hypot(e.clientX - startX, e.clientY - startY)
-      if (moved > 6 || phaseRef.current !== 'guessing') return
+      if (!g.pointers.delete(e.pointerId)) return
+      if (g.pointers.size > 0) {
+        g.pinchSpread = 0
+        return
+      }
+      if (e.type === 'pointercancel' || g.pinched) return
+      const moved = Math.hypot(e.clientX - g.startX, e.clientY - g.startY)
+      const globe = globeRef.current
+      if (moved > 6 || phaseRef.current !== 'guessing' || !globe) return
+      const rect = globe.getBoundingClientRect()
       const point = pickOnGlobe(
         view.current,
         e.clientX - rect.left,
@@ -221,16 +402,26 @@ export default function App() {
         rect.width,
         rect.height,
       )
-      if (point) placePin(point)
+      if (point) placePinRef.current(point)
     }
     window.addEventListener('pointermove', move)
     window.addEventListener('pointerup', up)
-  }
+    window.addEventListener('pointercancel', up)
+    return () => {
+      window.removeEventListener('pointermove', move)
+      window.removeEventListener('pointerup', up)
+      window.removeEventListener('pointercancel', up)
+    }
+  }, [])
 
   function onGlobeWheel(event: WheelEvent<HTMLDivElement>) {
-    const v = view.current
-    v.targetDist = Math.min(MAX_DIST, Math.max(MIN_DIST, v.targetDist + event.deltaY * 0.002))
+    // Trackpads send many small deltas, mouse wheels a few big ones;
+    // an exponential keeps both smooth
+    zoomBy(view.current, Math.exp(event.deltaY * 0.0015))
   }
+
+  const canZoomIn = (dist: number) => dist > MIN_DIST + 0.001
+  const canZoomOut = (dist: number) => dist < MAX_DIST - 0.001
 
   const reveal =
     phase === 'reveal' && lastResult
@@ -241,19 +432,44 @@ export default function App() {
     <div className="app">
       <header className="topbar">
         <p className="brand">
-          Shape Guesser
+          Outlinr
           <span className="byline">
             by <a href={PORTFOLIO_URL}>Mikaela Johansson</a>
           </span>
         </p>
-        <button
-          type="button"
-          className="chip-button"
-          aria-pressed={soundOn}
-          onClick={() => setSoundOn(!soundOn)}
-        >
-          Sound {soundOn ? 'on' : 'off'}
-        </button>
+        <div className="settings">
+          {/* A time limit you can't turn off fails WCAG 2.2.1, and not
+              everyone can find a place in 60 seconds */}
+          <button
+            type="button"
+            className="chip-button"
+            aria-pressed={timerOn}
+            onClick={() => setTimerOn(!timerOn)}
+          >
+            Timer {timerOn ? 'on' : 'off'}
+          </button>
+          {/* Music that plays for more than 3 seconds needs a way to stop
+              it (WCAG 1.4.2), separate from the sound effects */}
+          <button
+            type="button"
+            className="chip-button"
+            aria-pressed={musicOn}
+            onClick={() => {
+              setMusicOn(!musicOn)
+              setMusicStarted(true)
+            }}
+          >
+            Music {musicOn ? 'on' : 'off'}
+          </button>
+          <button
+            type="button"
+            className="chip-button"
+            aria-pressed={soundOn}
+            onClick={() => setSoundOn(!soundOn)}
+          >
+            Sound {soundOn ? 'on' : 'off'}
+          </button>
+        </div>
       </header>
 
       <div
@@ -275,43 +491,63 @@ export default function App() {
         />
         {phase === 'guessing' && <div className="crosshair" aria-hidden="true" />}
       </div>
+
+      <ZoomButtons view={view} canZoomIn={canZoomIn} canZoomOut={canZoomOut} />
       <p id="globe-help" className="sr-only">
         Arrow keys spin the globe under the crosshair in the middle, hold Shift for bigger steps. Plus
-        and minus zoom. Space drops a pin, Enter guesses.
+        and minus zoom. Space drops a pin, Enter guesses, C gives a clue.
       </p>
 
       {phase === 'intro' && (
         <section className="panel intro" aria-labelledby="intro-title">
-          <h1 id="intro-title">Shape Guesser</h1>
+          <h1 id="intro-title">Outlinr</h1>
           <p>
-            You get the outline of a country. Find it on the globe and drop a pin. The closer you are,
-            the more points: {ROUNDS} rounds, up to {points(MAX_SCORE)} points each.
+            You get a shape: a country or a US state. Find it on the globe and drop a pin. The
+            closer and faster you are, the more points: {ROUNDS} rounds, up to{' '}
+            {points(MAX_SCORE)} points each. Stuck? Clues appear as time goes by.
           </p>
           <div className="actions">
             <button type="button" className="primary" onClick={() => start(true)}>
               Play today’s challenge
             </button>
             <button type="button" onClick={() => start(false)}>
-              Random countries
+              Random shapes
             </button>
           </div>
           <details className="how">
             <summary>How to play</summary>
             <ul>
               <li>
-                <strong>Mouse or touch:</strong> drag to spin, scroll to zoom, click to drop a pin,
-                then press Guess.
+                <strong>Mouse or touch:</strong> drag to spin, scroll, pinch or use the + and −
+                buttons to zoom, click to drop a pin, then press Guess.
               </li>
               <li>
                 <strong>Keyboard:</strong> arrow keys spin the globe under the crosshair, + and −
-                zoom, Space drops a pin, Enter guesses.
+                zoom, Space drops a pin, Enter guesses, C gives a clue.
               </li>
               <li>
-                Inside the country is a perfect score. Outside, distance is measured to its nearest
+                <strong>Time and clues:</strong> each round has {ROUND_SECONDS} seconds. The
+                population comes after {CLUE_TIMES[0]} seconds, the part of the world after{' '}
+                {CLUE_TIMES[1]} and the first letter after {CLUE_TIMES[2]}. Getting a clue early
+                skips the clock ahead to it.
+              </li>
+              <li>
+                <strong>Speed bonus:</strong> guess straight away and you keep all your points; at
+                the end of the time, half. Turn the timer off at the top to play without a time
+                limit; clues then only come when you ask, and still cost the same.
+              </li>
+              <li>
+                Inside the shape is a perfect score. Outside, distance is measured to its nearest
                 border, not its centre.
               </li>
             </ul>
           </details>
+          <p className="sources">
+            Population from <a href="https://www.wikidata.org">Wikidata</a>. Borders from{' '}
+            <a href="https://www.naturalearthdata.com">Natural Earth</a> and the{' '}
+            <a href="https://www.census.gov">US Census Bureau</a>. All public domain. Music made with
+            Google Gemini.
+          </p>
         </section>
       )}
 
@@ -322,7 +558,34 @@ export default function App() {
               Round {round + 1} / {ROUNDS} · {points(total)} points
             </p>
             <Silhouette country={current} />
-            <p className="prompt">Which country is this?</p>
+            <p className="prompt">Where is this?</p>
+            {timerOn && (
+              <div className="clock" aria-hidden="true">
+                <div
+                  className="clock-fill"
+                  style={{ width: `${(1 - elapsed / ROUND_SECONDS) * 100}%` }}
+                />
+              </div>
+            )}
+            <p className="speed">
+              {timerOn && `${Math.ceil(ROUND_SECONDS - elapsed)} s left · `}
+              Speed bonus {percent(speedFactor(elapsed))}
+            </p>
+            {cluesShown > 0 && (
+              <dl className="clues">
+                {clues.slice(0, cluesShown).map((clue) => (
+                  <div key={clue.label}>
+                    <dt>{clue.label}</dt>
+                    <dd>{clue.value}</dd>
+                  </div>
+                ))}
+              </dl>
+            )}
+            {cluesShown < clues.length && (
+              <button type="button" className="chip-button clue-button" onClick={takeClue}>
+                Get a clue
+              </button>
+            )}
           </section>
           <div className="guess-bar">
             <button type="button" className="primary" disabled={!pin} onClick={() => guess()}>
@@ -373,19 +636,24 @@ function RevealPanel({
   onNext: () => void
   buttonRef: RefObject<HTMLButtonElement | null>
 }) {
-  const km = useCountUp(Math.round(result.km), 1100, reducedMotion)
+  const km = useCountUp(Math.round(result.km ?? 0), 1100, reducedMotion)
   const score = useCountUp(result.score, 1300, reducedMotion)
   const perfect = result.km === 0
+  const timedOut = result.km === null
   return (
     <section className="panel reveal" aria-labelledby="reveal-title">
-      <p className="eyebrow">{perfect ? 'Spot on!' : 'It was'}</p>
-      <h2 id="reveal-title">{countryName(result.country)}</h2>
+      <p className="eyebrow">{timedOut ? 'Time’s up! It was' : perfect ? 'Spot on!' : 'It was'}</p>
+      <h2 id="reveal-title">{placeName(result.country)}</h2>
       {/* The numbers count up visually; screen readers get the final values
           from the announcement instead of every step */}
       <dl className="stats" aria-hidden="true">
         <div>
           <dt>Distance</dt>
-          <dd>{perfect ? 'Inside!' : `${points(km)} km`}</dd>
+          <dd>{timedOut ? '–' : perfect ? 'Inside!' : `${points(km)} km`}</dd>
+        </div>
+        <div>
+          <dt>Time</dt>
+          <dd>{Math.round(result.seconds)} s</dd>
         </div>
         <div>
           <dt>Points</dt>
@@ -423,7 +691,7 @@ function SummaryPanel({
 
   async function share() {
     const text = [
-      `Shape Guesser${daily ? ` ${todayKey()}` : ''}: ${points(total)} / ${points(ROUNDS * MAX_SCORE)}`,
+      `Outlinr${daily ? ` ${todayKey()}` : ''}: ${points(total)} / ${points(ROUNDS * MAX_SCORE)}`,
       squares,
       GAME_URL,
     ].join('\n')
@@ -451,8 +719,10 @@ function SummaryPanel({
         {results.map((r, i) => (
           <li key={i}>
             <span aria-hidden="true">{scoreSquare(r.score)}</span>
-            <span className="name">{countryName(r.country)}</span>
-            <span className="km">{r.km === 0 ? 'inside' : formatKm(r.km)}</span>
+            <span className="name">{placeName(r.country)}</span>
+            <span className="km">
+              {r.km === null ? 'time’s up' : r.km === 0 ? 'inside' : formatKm(r.km)}
+            </span>
             <span className="pts">{points(r.score)}</span>
           </li>
         ))}
@@ -462,9 +732,52 @@ function SummaryPanel({
           Copy result
         </button>
         <button type="button" onClick={() => onPlay(false)}>
-          Play random countries
+          Play random shapes
         </button>
       </div>
     </section>
+  )
+}
+
+// On-screen zoom buttons, for anyone without a scroll wheel or pinch.
+// Disabled at the zoom limits, which is checked a few times a second
+// because the distance lives in the per-frame view, not React state.
+function ZoomButtons({
+  view,
+  canZoomIn,
+  canZoomOut,
+}: {
+  view: RefObject<View>
+  canZoomIn: (dist: number) => boolean
+  canZoomOut: (dist: number) => boolean
+}) {
+  const [dist, setDist] = useState(view.current.targetDist)
+  useEffect(() => {
+    const timer = setInterval(() => setDist(view.current.targetDist), 200)
+    return () => clearInterval(timer)
+  }, [view])
+  const zoom = (factor: number) => {
+    zoomBy(view.current, factor)
+    setDist(view.current.targetDist)
+  }
+  return (
+    <div className="zoom" role="group" aria-label="Zoom">
+      <button
+        type="button"
+        aria-label="Zoom in"
+        disabled={!canZoomIn(dist)}
+        onClick={() => zoom(1 / ZOOM_STEP)}
+      >
+        <span aria-hidden="true">+</span>
+      </button>
+      <button
+        type="button"
+        aria-label="Zoom out"
+        disabled={!canZoomOut(dist)}
+        onClick={() => zoom(ZOOM_STEP)}
+      >
+        <span aria-hidden="true">−</span>
+      </button>
+    </div>
   )
 }
