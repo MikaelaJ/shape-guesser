@@ -432,7 +432,7 @@ export default function App() {
     <div className="app">
       <header className="topbar">
         <p className="brand">
-          Shape Guesser
+          Outlinr
           <span className="byline">
             by <a href={PORTFOLIO_URL}>Mikaela Johansson</a>
           </span>
@@ -500,7 +500,7 @@ export default function App() {
 
       {phase === 'intro' && (
         <section className="panel intro" aria-labelledby="intro-title">
-          <h1 id="intro-title">Shape Guesser</h1>
+          <h1 id="intro-title">Outlinr</h1>
           <p>
             You get a shape: a country or a US state. Find it on the globe and drop a pin. The
             closer and faster you are, the more points: {ROUNDS} rounds, up to{' '}
@@ -690,7 +690,7 @@ function SummaryPanel({
 
   async function share() {
     const text = [
-      `Shape Guesser${daily ? ` ${todayKey()}` : ''}: ${points(total)} / ${points(ROUNDS * MAX_SCORE)}`,
+      `Outlinr${daily ? ` ${todayKey()}` : ''}: ${points(total)} / ${points(ROUNDS * MAX_SCORE)}`,
       squares,
       GAME_URL,
     ].join('\n')

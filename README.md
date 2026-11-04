@@ -1,4 +1,4 @@
-# Shape Guesser
+# Outlinr
 
 A small geo mini-game on a 3D globe: you get a shape, either a country or a US state, find it on the globe and drop a pin. The closer and faster you are, the more points, and clues appear as the clock runs. Five rounds, a daily challenge that's the same for everyone, and a shareable result.
 
