@@ -2,7 +2,7 @@
 
 A small geo mini-game on a 3D globe: you get a shape, either a country or a US state, find it on the globe and drop a pin. The closer and faster you are, the more points, and clues appear as the clock runs. Five rounds, a daily challenge that's the same for everyone, and a shareable result.
 
-**Play:** https://mikaelajohansson.com/shape-guesser/
+**Play:** https://mikaelajohansson.com/outlinr/
 
 Built by [Mikaela Johansson](https://mikaelajohansson.com) as a focused, finished slice of the kind of thing I'd love to build: one mechanic, polished, that hopefully makes people smile.
 
@@ -103,8 +103,8 @@ pnpm install
 pnpm dev
 ```
 
-Then open http://localhost:5173/shape-guesser/. `pnpm build` makes a static build in `dist/`.
+Then open http://localhost:5173/outlinr/. `pnpm build` makes a static build in `dist/`.
 
 ## Credits
 
-Country borders: Natural Earth, public domain. US states: US Census Bureau, public domain. Population: Wikidata, CC0. Not affiliated with GeoGuessr.
+Country borders: Natural Earth, public domain. US states: US Census Bureau, public domain. Population: Wikidata, CC0. Music: made with Google Gemini. Not affiliated with GeoGuessr.

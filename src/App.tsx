@@ -59,7 +59,7 @@ type Result = {
 }
 
 const PORTFOLIO_URL = 'https://mikaelajohansson.com/'
-const GAME_URL = 'https://mikaelajohansson.com/shape-guesser/'
+const GAME_URL = 'https://mikaelajohansson.com/outlinr/'
 
 const normaliseLon = (lon: number) => ((((lon + 180) % 360) + 360) % 360) - 180
 
@@ -545,7 +545,8 @@ export default function App() {
           <p className="sources">
             Population from <a href="https://www.wikidata.org">Wikidata</a>. Borders from{' '}
             <a href="https://www.naturalearthdata.com">Natural Earth</a> and the{' '}
-            <a href="https://www.census.gov">US Census Bureau</a>. All public domain.
+            <a href="https://www.census.gov">US Census Bureau</a>. All public domain. Music made with
+            Google Gemini.
           </p>
         </section>
       )}

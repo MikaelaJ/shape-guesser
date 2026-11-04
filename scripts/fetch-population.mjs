@@ -19,7 +19,7 @@ const us = require('us-atlas/states-10m.json')
 
 const ENDPOINT = 'https://query.wikidata.org/sparql'
 // Wikidata asks for a User-Agent that says who is calling
-const USER_AGENT = 'outlinr-data/1.0 (https://mikaelajohansson.com/shape-guesser/)'
+const USER_AGENT = 'outlinr-data/1.0 (https://mikaelajohansson.com/outlinr/)'
 
 async function sparql(query) {
   const response = await fetch(`${ENDPOINT}?query=${encodeURIComponent(query)}`, {
