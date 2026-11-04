@@ -49,7 +49,6 @@ const fullNames: Record<string, string> = {
   'United States of America': 'United States',
 }
 
-export const placeName = (place: Place) => fullNames[place.properties.name] ?? place.properties.name
 
 // US states from the US Census Bureau's boundaries (public domain), via the
 // us-atlas package. The ids are FIPS codes: the 50 states are 01-56, minus
@@ -63,6 +62,23 @@ export const usStates = (feature(us, us.objects.states) as Places).features.filt
 // The lines between neighbouring states, each drawn once. Coastlines and
 // the borders with Canada and Mexico are already in the country borders.
 export const stateBorders = mesh(us, us.objects.states, (a, b) => a !== b)
+
+// Countries and states are asked together, as shapes: 50 states next to
+// about 140 countries, so roughly one round in four is a state.
+const states = new Set(usStates)
+export const isState = (place: Place) => states.has(place)
+export const allPlaces = [...playableCountries, ...usStates]
+
+// States get ", USA" so Georgia the state and Georgia the country can't
+// be mixed up
+export const placeName = (place: Place) =>
+  isState(place)
+    ? `${place.properties.name}, USA`
+    : (fullNames[place.properties.name] ?? place.properties.name)
+
+// How forgiving the score is (see scoreFor). States are much smaller than
+// most countries, so being 500 km off a state should cost more.
+export const scoreScaleFor = (place: Place) => (isState(place) ? 500 : 2000)
 
 export type LatLon = { lat: number; lon: number }
 

@@ -221,45 +221,6 @@ button.primary:disabled {
 .intro p {
   margin: 0 0 1.25rem;
 }
-/* Countries / US states, as a segmented control. Real radio buttons
-   underneath, so arrow keys and screen readers work as usual. */
-.modes {
-  display: inline-flex;
-  margin: 0 0 1.25rem;
-  padding: 0.25rem;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-}
-.modes label {
-  position: relative;
-  display: flex;
-  align-items: center;
-  min-height: 36px;
-  padding: 0 1rem;
-  border-radius: 999px;
-  cursor: pointer;
-  font-size: 0.9rem;
-}
-.modes input {
-  position: absolute;
-  inset: 0;
-  margin: 0;
-  opacity: 0;
-  cursor: pointer;
-}
-.modes label:has(input:checked) {
-  background: var(--text);
-  color: var(--bg);
-  font-weight: 500;
-}
-.modes label:has(input:focus-visible) {
-  outline: 2px solid var(--text);
-  outline-offset: 3px;
-}
-.intro h1:focus {
-  outline: none;
-}
-
 .actions {
   display: flex;
   flex-wrap: wrap;

@@ -4,11 +4,11 @@ import type { Place } from './geo'
 
 const SIZE = 220
 
-// The country's or state's outline on its own, with no map around it. The
+// The country's or US state's outline on its own, with no map around it. The
 // projection is centred on the place itself, so the shape isn't stretched
 // (unlike a world map, where Greenland looks bigger than Africa) and its
 // position gives nothing away.
-export function Silhouette({ country, noun }: { country: Place; noun: string }) {
+export function Silhouette({ country }: { country: Place }) {
   const d = useMemo(() => {
     const [lon, lat] = geoCentroid(country)
     const projection = geoAzimuthalEqualArea()
@@ -28,7 +28,7 @@ export function Silhouette({ country, noun }: { country: Place; noun: string }) 
       viewBox={`0 0 ${SIZE} ${SIZE}`}
       className="silhouette"
       role="img"
-      aria-label={`Outline of the mystery ${noun}`}
+      aria-label="Outline of the mystery shape"
     >
       <path d={d} />
     </svg>
