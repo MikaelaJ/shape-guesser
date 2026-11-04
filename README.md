@@ -73,6 +73,7 @@ Some decisions worth explaining:
 - **State lines are drawn once:** topojson's `mesh` gives only the lines between neighbouring states, so shared borders aren't drawn twice and coastlines come from the country data.
 - **Lakes are drawn on top of the land.** The country shapes include lakes as land, so without them the Great Lakes were missing and Michigan, Wisconsin, Ohio and New York had no lake shores. The lakes are painted back as water and get shorelines like the coasts. Scoring still uses the country shapes, so a pin in Lake Michigan counts as the US.
 - **Crimea is part of Ukraine, and Kaliningrad isn't part of Russia's outline.** The map data draws both inside Russia. Crimea is moved to Ukraine, as recognised internationally (UN General Assembly resolution 68/262), and merged into its outline with topojson's `merge` so no border is left across the isthmus. Kaliningrad stays on the map as land of its own, but isn't asked about or counted as Russia, so Russia's silhouette is the main part of the country.
+- **Some countries are never asked, to keep the game out of today's sharpest conflicts:** Russia and Ukraine, whose border is contested in a war. Israel and Palestine aren't asked either, because they're below the size limit. They're all still on the map.
 - **Disputed areas** that the data draws as separate shapes (Western Sahara, Somaliland, Northern Cyprus) are shown on the map but never asked about, so the game doesn't take a side.
 
 ## What I'd do next

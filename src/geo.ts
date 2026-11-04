@@ -83,15 +83,22 @@ export const countries = redrawRussia(
 
 // Countries big enough to guess from their outline. geoArea is in
 // steradians: 0.0008 is roughly 32 000 km2, about the size of Belgium.
-// Left out: Antarctica, Kaliningrad (see above), and disputed areas the data draws as separate
-// shapes, so the game doesn't take a side. They still appear on the map.
+// Left out, though they still appear on the map:
+// - Antarctica and Kaliningrad (see above)
+// - disputed areas the data draws as separate shapes, so the game doesn't
+//   take a side
+// - countries at the centre of today's sharpest conflicts, whose outlines
+//   are themselves contested. Israel and Palestine are also left out, but
+//   by the size limit below.
 const notAsked = new Set([
   'Antarctica',
   'Fr. S. Antarctic Lands',
+  'Kaliningrad',
   'W. Sahara',
   'Somaliland',
   'N. Cyprus',
-  'Kaliningrad',
+  'Russia',
+  'Ukraine',
 ])
 export const playableCountries = countries.filter(
   (c) => !notAsked.has(c.properties.name) && geoArea(c) > 0.0008,
