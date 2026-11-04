@@ -1,14 +1,14 @@
 import { geoAzimuthalEqualArea, geoCentroid, geoPath } from 'd3-geo'
 import { useMemo } from 'react'
-import type { Country } from './geo'
+import type { Place } from './geo'
 
 const SIZE = 220
 
-// The country's outline on its own, with no map around it. The projection
-// is centred on the country itself, so the shape isn't stretched (unlike a
-// world map, where Greenland looks bigger than Africa) and its position
-// gives nothing away.
-export function Silhouette({ country }: { country: Country }) {
+// The country's or state's outline on its own, with no map around it. The
+// projection is centred on the place itself, so the shape isn't stretched
+// (unlike a world map, where Greenland looks bigger than Africa) and its
+// position gives nothing away.
+export function Silhouette({ country, noun }: { country: Place; noun: string }) {
   const d = useMemo(() => {
     const [lon, lat] = geoCentroid(country)
     const projection = geoAzimuthalEqualArea()
@@ -28,7 +28,7 @@ export function Silhouette({ country }: { country: Country }) {
       viewBox={`0 0 ${SIZE} ${SIZE}`}
       className="silhouette"
       role="img"
-      aria-label="Outline of the mystery country"
+      aria-label={`Outline of the mystery ${noun}`}
     >
       <path d={d} />
     </svg>

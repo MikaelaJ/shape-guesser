@@ -1,9 +1,31 @@
-import { playableCountries, type Country } from './geo'
+import { playableCountries, usStates, type Place } from './geo'
 
 export const ROUNDS = 5
 
+export type Mode = 'countries' | 'states'
+
+// What changes between guessing countries and guessing US states
+export const modes = {
+  countries: {
+    places: playableCountries,
+    noun: 'country',
+    plural: 'countries',
+    // How forgiving the score is, see scoreFor
+    scoreScale: 2000,
+    // Where the camera goes when a game starts
+    start: { lat: 20, lon: 10, dist: 3 },
+  },
+  states: {
+    places: usStates,
+    noun: 'state',
+    plural: 'US states',
+    scoreScale: 500,
+    start: { lat: 40, lon: -100, dist: 1.9 },
+  },
+} satisfies Record<Mode, unknown>
+
 // Small seeded random number generator (mulberry32), so the daily
-// challenge gives everyone the same five countries without a backend.
+// challenge gives everyone the same five places without a backend.
 function seededRandom(seed: number) {
   return () => {
     seed |= 0
@@ -25,9 +47,13 @@ export function todayKey(date = new Date()) {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
 }
 
-export function pickCountries(seed: string | null): Country[] {
+// The daily challenge has its own seed per mode. Countries keep the plain
+// date, so their challenge didn't change when states were added.
+export const dailySeed = (mode: Mode) => (mode === 'countries' ? todayKey() : `${todayKey()}:${mode}`)
+
+export function pickPlaces(mode: Mode, seed: string | null): Place[] {
   const random = seed ? seededRandom(hash(seed)) : Math.random
-  const pool = [...playableCountries]
+  const pool = [...modes[mode].places]
   // Partial Fisher-Yates shuffle: only the first ROUNDS are needed
   for (let i = 0; i < ROUNDS; i++) {
     const j = i + Math.floor(random() * (pool.length - i))

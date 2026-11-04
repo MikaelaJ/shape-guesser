@@ -7,17 +7,17 @@ import {
   type RefObject,
   type WheelEvent,
 } from 'react'
-import { ROUNDS, pickCountries, scoreSquare, todayKey } from './game'
+import { ROUNDS, dailySeed, modes, pickPlaces, scoreSquare, todayKey, type Mode } from './game'
 import {
   MAX_SCORE,
   angleBetween,
-  distanceToCountry,
+  distanceToPlace,
   formatKm,
   formatLatLon,
   midpoint,
   scoreFor,
-  countryName,
-  type Country,
+  placeName,
+  type Place,
   type LatLon,
 } from './geo'
 import { Globe } from './Globe'
@@ -35,7 +35,7 @@ import {
 } from './view'
 
 type Phase = 'intro' | 'guessing' | 'reveal' | 'summary'
-type Result = { country: Country; guess: LatLon; nearest: LatLon; km: number; score: number }
+type Result = { country: Place; guess: LatLon; nearest: LatLon; km: number; score: number }
 
 const PORTFOLIO_URL = 'https://mikaelajohansson.com/'
 const GAME_URL = 'https://mikaelajohansson.com/shape-guesser/'
@@ -63,8 +63,9 @@ export default function App() {
   })
 
   const [phase, setPhase] = useState<Phase>('intro')
+  const [mode, setMode] = useState<Mode>('countries')
   const [daily, setDaily] = useState(true)
-  const [rounds, setRounds] = useState<Country[]>([])
+  const [rounds, setRounds] = useState<Place[]>([])
   const [round, setRound] = useState(0)
   const [pin, setPin] = useState<LatLon | null>(null)
   const [results, setResults] = useState<Result[]>([])
@@ -78,6 +79,7 @@ export default function App() {
   }, [phase])
 
   const globeRef = useRef<HTMLDivElement>(null)
+  const introRef = useRef<HTMLHeadingElement>(null)
   const nextRef = useRef<HTMLButtonElement>(null)
   const summaryRef = useRef<HTMLHeadingElement>(null)
 
@@ -100,24 +102,42 @@ export default function App() {
   const lastResult = results[results.length - 1]
 
   // Move keyboard focus to wherever the player needs to act next
+  const { noun, plural, scoreScale, start: startView } = modes[mode]
+
   useEffect(() => {
+    // Only when coming back from a game, not on page load
+    if (phase === 'intro' && results.length > 0) introRef.current?.focus()
     if (phase === 'guessing') globeRef.current?.focus()
     if (phase === 'reveal') nextRef.current?.focus()
     if (phase === 'summary') summaryRef.current?.focus()
-  }, [phase, round])
+  }, [phase, round, results.length])
 
   const roundPrompt = (n: number) =>
-    `Round ${n} of ${ROUNDS}. Which country has this shape? Find it on the globe.`
+    `Round ${n} of ${ROUNDS}. Which ${noun} has this shape? Find it on the globe.`
+
+  // Turn the globe to show what you'll be guessing. The idle spin would
+  // carry the US out of view, so it stops for states.
+  function chooseMode(next: Mode) {
+    setMode(next)
+    const v = view.current
+    v.spin = next === 'countries'
+    v.targetLat = modes[next].start.lat
+    v.targetLon = modes[next].start.lon
+    v.targetDist = modes[next].start.dist
+  }
 
   function start(isDaily: boolean) {
     setDaily(isDaily)
-    setRounds(pickCountries(isDaily ? todayKey() : null))
+    setRounds(pickPlaces(mode, isDaily ? dailySeed(mode) : null))
     setRound(0)
     setResults([])
     setPin(null)
     setPhase('guessing')
-    view.current.spin = false
-    view.current.targetDist = 3
+    const v = view.current
+    v.spin = false
+    v.targetLat = startView.lat
+    v.targetLon = startView.lon
+    v.targetDist = startView.dist
     announce(roundPrompt(1))
   }
 
@@ -129,8 +149,8 @@ export default function App() {
 
   function guess(point: LatLon | null = pin) {
     if (!point || !current) return
-    const { km, nearest } = distanceToCountry(current, point)
-    const score = scoreFor(km)
+    const { km, nearest } = distanceToPlace(current, point)
+    const score = scoreFor(km, scoreScale)
     setPin(point)
     setResults((r) => [...r, { country: current, guess: point, nearest, km, score }])
     setPhase('reveal')
@@ -140,10 +160,11 @@ export default function App() {
     const v = view.current
     v.targetLat = clampLat(centre.lat)
     v.targetLon = centre.lon
-    v.targetDist = Math.min(Math.max(2.2 + angleBetween(point, nearest) * 1.2, MIN_DIST), MAX_DIST)
+    const base = mode === 'states' ? 1.6 : 2.2
+    v.targetDist = Math.min(Math.max(base + angleBetween(point, nearest) * 1.2, MIN_DIST), MAX_DIST)
 
     play(() => sounds.reveal(score))
-    const name = countryName(current)
+    const name = placeName(current)
     announce(
       km === 0
         ? `Spot on, that's inside ${name}! ${score} points.`
@@ -338,6 +359,7 @@ export default function App() {
       >
         <Globe
           view={view}
+          mode={mode}
           reducedMotion={reducedMotion}
           pin={phase === 'guessing' || phase === 'reveal' ? pin : null}
           reveal={reveal}
@@ -353,17 +375,34 @@ export default function App() {
 
       {phase === 'intro' && (
         <section className="panel intro" aria-labelledby="intro-title">
-          <h1 id="intro-title">Shape Guesser</h1>
+          <h1 id="intro-title" ref={introRef} tabIndex={-1}>
+            Shape Guesser
+          </h1>
           <p>
-            You get the outline of a country. Find it on the globe and drop a pin. The closer you are,
+            You get the outline of a {noun}. Find it on the globe and drop a pin. The closer you are,
             the more points: {ROUNDS} rounds, up to {points(MAX_SCORE)} points each.
           </p>
+          <fieldset className="modes">
+            <legend className="sr-only">What do you want to guess?</legend>
+            {(Object.keys(modes) as Mode[]).map((m) => (
+              <label key={m}>
+                <input
+                  type="radio"
+                  name="mode"
+                  value={m}
+                  checked={mode === m}
+                  onChange={() => chooseMode(m)}
+                />
+                <span>{m === 'countries' ? 'Countries' : 'US states'}</span>
+              </label>
+            ))}
+          </fieldset>
           <div className="actions">
             <button type="button" className="primary" onClick={() => start(true)}>
               Play today’s challenge
             </button>
             <button type="button" onClick={() => start(false)}>
-              Random countries
+              Random {plural}
             </button>
           </div>
           <details className="how">
@@ -378,7 +417,7 @@ export default function App() {
                 zoom, Space drops a pin, Enter guesses.
               </li>
               <li>
-                Inside the country is a perfect score. Outside, distance is measured to its nearest
+                Inside the {noun} is a perfect score. Outside, distance is measured to its nearest
                 border, not its centre.
               </li>
             </ul>
@@ -392,8 +431,8 @@ export default function App() {
             <p className="eyebrow">
               Round {round + 1} / {ROUNDS} · {points(total)} points
             </p>
-            <Silhouette country={current} />
-            <p className="prompt">Which country is this?</p>
+            <Silhouette country={current} noun={noun} />
+            <p className="prompt">Which {noun} is this?</p>
           </section>
           <div className="guess-bar">
             <button type="button" className="primary" disabled={!pin} onClick={() => guess()}>
@@ -416,10 +455,12 @@ export default function App() {
       {phase === 'summary' && (
         <SummaryPanel
           results={results}
+          mode={mode}
           daily={daily}
           reducedMotion={reducedMotion}
           headingRef={summaryRef}
           onPlay={start}
+          onMenu={() => setPhase('intro')}
           announce={announce}
         />
       )}
@@ -450,7 +491,7 @@ function RevealPanel({
   return (
     <section className="panel reveal" aria-labelledby="reveal-title">
       <p className="eyebrow">{perfect ? 'Spot on!' : 'It was'}</p>
-      <h2 id="reveal-title">{countryName(result.country)}</h2>
+      <h2 id="reveal-title">{placeName(result.country)}</h2>
       {/* The numbers count up visually; screen readers get the final values
           from the announcement instead of every step */}
       <dl className="stats" aria-hidden="true">
@@ -475,17 +516,21 @@ function RevealPanel({
 
 function SummaryPanel({
   results,
+  mode,
   daily,
   reducedMotion,
   headingRef,
   onPlay,
+  onMenu,
   announce,
 }: {
   results: Result[]
+  mode: Mode
   daily: boolean
   reducedMotion: boolean
   headingRef: RefObject<HTMLHeadingElement | null>
   onPlay: (daily: boolean) => void
+  onMenu: () => void
   announce: (message: string) => void
 }) {
   const total = results.reduce((sum, r) => sum + r.score, 0)
@@ -494,7 +539,7 @@ function SummaryPanel({
 
   async function share() {
     const text = [
-      `Shape Guesser${daily ? ` ${todayKey()}` : ''}: ${points(total)} / ${points(ROUNDS * MAX_SCORE)}`,
+      `Shape Guesser${mode === 'states' ? ' US states' : ''}${daily ? ` ${todayKey()}` : ''}: ${points(total)} / ${points(ROUNDS * MAX_SCORE)}`,
       squares,
       GAME_URL,
     ].join('\n')
@@ -522,7 +567,7 @@ function SummaryPanel({
         {results.map((r, i) => (
           <li key={i}>
             <span aria-hidden="true">{scoreSquare(r.score)}</span>
-            <span className="name">{countryName(r.country)}</span>
+            <span className="name">{placeName(r.country)}</span>
             <span className="km">{r.km === 0 ? 'inside' : formatKm(r.km)}</span>
             <span className="pts">{points(r.score)}</span>
           </li>
@@ -533,7 +578,10 @@ function SummaryPanel({
           Copy result
         </button>
         <button type="button" onClick={() => onPlay(false)}>
-          Play random countries
+          Play random {modes[mode].plural}
+        </button>
+        <button type="button" onClick={onMenu}>
+          Change mode
         </button>
       </div>
     </section>

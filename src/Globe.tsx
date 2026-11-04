@@ -3,7 +3,9 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { geoEquirectangular, geoGraticule10, geoPath } from 'd3-geo'
 import { useMemo, useRef, type ComponentRef, type RefObject } from 'react'
 import * as THREE from 'three'
-import { arcPoints, countries, toVector, type Country, type LatLon } from './geo'
+import type { Position } from 'geojson'
+import { arcPoints, countries, stateBorders, toVector, type Place, type LatLon } from './geo'
+import type { Mode } from './game'
 import { FOV, colors, type View } from './view'
 
 // Countries drawn onto an equirectangular canvas, which three.js wraps
@@ -51,13 +53,13 @@ function useGlobeTexture() {
   }, [maxSize])
 }
 
-// The answer country filled in the accent colour, on a transparent canvas
-// laid just above the globe
-function useHighlightTexture(country: Country | null) {
+// The answer filled in the accent colour, on a transparent canvas laid just
+// above the globe. States are small, so they get a sharper canvas.
+function useHighlightTexture(country: Place | null, mode: Mode) {
   return useMemo(() => {
     if (!country) return null
-    const width = 2048
-    const height = 1024
+    const width = mode === 'states' ? 4096 : 2048
+    const height = width / 2
     const canvas = document.createElement('canvas')
     canvas.width = width
     canvas.height = height
@@ -75,38 +77,49 @@ function useHighlightTexture(country: Country | null) {
     const texture = new THREE.CanvasTexture(canvas)
     texture.colorSpace = THREE.SRGBColorSpace
     return texture
-  }, [country])
+  }, [country, mode])
 }
 
-// Every country outline as line segments just above the surface. Lines
-// are drawn by the GPU at a fixed 1 px width, so unlike borders painted
-// into the texture they don't get thick and blurry when zoomed in.
-function Borders() {
-  const geometry = useMemo(() => {
-    const positions: number[] = []
-    for (const country of countries) {
-      const polygons =
-        country.geometry.type === 'Polygon'
-          ? [country.geometry.coordinates]
-          : country.geometry.coordinates
-      for (const polygon of polygons) {
-        for (const ring of polygon) {
-          for (let i = 1; i < ring.length; i++) {
-            const a = toVector({ lon: ring[i - 1][0], lat: ring[i - 1][1] }, 1.0015)
-            const b = toVector({ lon: ring[i][0], lat: ring[i][1] }, 1.0015)
-            positions.push(a.x, a.y, a.z, b.x, b.y, b.z)
-          }
-        }
-      }
+// Lines of lon/lat points as line segments just above the surface
+function linesGeometry(lines: Position[][]) {
+  const positions: number[] = []
+  for (const line of lines) {
+    for (let i = 1; i < line.length; i++) {
+      const a = toVector({ lon: line[i - 1][0], lat: line[i - 1][1] }, 1.0015)
+      const b = toVector({ lon: line[i][0], lat: line[i][1] }, 1.0015)
+      positions.push(a.x, a.y, a.z, b.x, b.y, b.z)
     }
-    const g = new THREE.BufferGeometry()
-    g.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3))
-    return g
-  }, [])
+  }
+  const g = new THREE.BufferGeometry()
+  g.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3))
+  return g
+}
+
+const countryLines = () =>
+  countries.flatMap((country) =>
+    country.geometry.type === 'Polygon'
+      ? country.geometry.coordinates
+      : country.geometry.coordinates.flat(),
+  )
+
+// Every country outline, and the US state lines when playing states, as
+// 3D lines. Lines are drawn by the GPU at a fixed 1 px width, so unlike
+// borders painted into the texture they don't get thick and blurry when
+// zoomed in.
+function Borders({ mode }: { mode: Mode }) {
+  const countryGeometry = useMemo(() => linesGeometry(countryLines()), [])
+  const stateGeometry = useMemo(() => linesGeometry(stateBorders.coordinates), [])
   return (
-    <lineSegments geometry={geometry}>
-      <lineBasicMaterial color={colors.border} />
-    </lineSegments>
+    <>
+      <lineSegments geometry={countryGeometry}>
+        <lineBasicMaterial color={colors.border} />
+      </lineSegments>
+      {mode === 'states' && (
+        <lineSegments geometry={stateGeometry}>
+          <lineBasicMaterial color={colors.border} transparent opacity={0.6} />
+        </lineSegments>
+      )}
+    </>
   )
 }
 
@@ -224,14 +237,15 @@ function Arc({ from, to, reducedMotion }: { from: LatLon; to: LatLon; reducedMot
 
 type GlobeProps = {
   view: RefObject<View>
+  mode: Mode
   reducedMotion: boolean
   pin: LatLon | null
-  reveal: { guess: LatLon; nearest: LatLon; country: Country } | null
+  reveal: { guess: LatLon; nearest: LatLon; country: Place } | null
 }
 
-function Scene({ view, reducedMotion, pin, reveal }: GlobeProps) {
+function Scene({ view, mode, reducedMotion, pin, reveal }: GlobeProps) {
   const texture = useGlobeTexture()
-  const highlight = useHighlightTexture(reveal?.country ?? null)
+  const highlight = useHighlightTexture(reveal?.country ?? null, mode)
 
   return (
     <>
@@ -257,7 +271,7 @@ function Scene({ view, reducedMotion, pin, reveal }: GlobeProps) {
           <meshBasicMaterial map={highlight} transparent opacity={0.9} depthWrite={false} />
         </mesh>
       )}
-      <Borders />
+      <Borders mode={mode} />
       <Atmosphere />
       {pin && <Marker at={pin} color={colors.accent} view={view} />}
       {reveal && (

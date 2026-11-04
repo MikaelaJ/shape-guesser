@@ -1,22 +1,20 @@
 import { geoArea, geoContains, geoDistance, geoInterpolate } from 'd3-geo'
 import type { Feature, FeatureCollection, MultiPolygon, Polygon, Position } from 'geojson'
 import { Vector3 } from 'three'
-import { feature } from 'topojson-client'
+import { feature, mesh } from 'topojson-client'
 import type { GeometryCollection, Topology } from 'topojson-specification'
+import usAtlas from 'us-atlas/states-10m.json'
 import world from 'world-atlas/countries-50m.json'
+
+// Something to guess: a country or a US state
+export type Place = Feature<Polygon | MultiPolygon, { name: string }>
+type Places = FeatureCollection<Polygon | MultiPolygon, { name: string }>
 
 // Country borders from Natural Earth (public domain), via the world-atlas
 // package. 1:50m is detailed enough for recognisable silhouettes.
-export type Country = Feature<Polygon | MultiPolygon, { name: string }>
-
 const topology = world as unknown as Topology<{ countries: GeometryCollection<{ name: string }> }>
 
-export const countries = (
-  feature(topology, topology.objects.countries) as FeatureCollection<
-    Polygon | MultiPolygon,
-    { name: string }
-  >
-).features
+export const countries = (feature(topology, topology.objects.countries) as Places).features
 
 // Countries big enough to guess from their outline. geoArea is in
 // steradians: 0.0008 is roughly 32 000 km2, about the size of Belgium.
@@ -51,8 +49,20 @@ const fullNames: Record<string, string> = {
   'United States of America': 'United States',
 }
 
-export const countryName = (country: Country) =>
-  fullNames[country.properties.name] ?? country.properties.name
+export const placeName = (place: Place) => fullNames[place.properties.name] ?? place.properties.name
+
+// US states from the US Census Bureau's boundaries (public domain), via the
+// us-atlas package. The ids are FIPS codes: the 50 states are 01-56, minus
+// 11, the District of Columbia; above 56 are overseas territories.
+const us = usAtlas as unknown as Topology<{ states: GeometryCollection<{ name: string }> }>
+
+export const usStates = (feature(us, us.objects.states) as Places).features.filter(
+  (state) => Number(state.id) <= 56 && Number(state.id) !== 11,
+)
+
+// The lines between neighbouring states, each drawn once. Coastlines and
+// the borders with Canada and Mexico are already in the country borders.
+export const stateBorders = mesh(us, us.objects.states, (a, b) => a !== b)
 
 export type LatLon = { lat: number; lon: number }
 
@@ -79,17 +89,17 @@ export function toLatLon(v: Vector3): LatLon {
 
 const asPosition = (p: LatLon): [number, number] => [p.lon, p.lat]
 
-function* outlinePoints(country: Country): Generator<Position> {
+function* outlinePoints(country: Place): Generator<Position> {
   const polygons =
     country.geometry.type === 'Polygon' ? [country.geometry.coordinates] : country.geometry.coordinates
   for (const polygon of polygons) for (const ring of polygon) yield* ring
 }
 
-// How far a guess is from a country, and the closest point on it. A guess
-// inside the country counts as 0 km. Otherwise this measures to the
+// How far a guess is from a country or state, and the closest point on it.
+// A guess inside counts as 0 km. Otherwise this measures to the
 // nearest border point (vertex), not the centre: a click just over the
 // border of a huge country like Russia should score well.
-export function distanceToCountry(country: Country, guess: LatLon) {
+export function distanceToPlace(country: Place, guess: LatLon) {
   if (geoContains(country, asPosition(guess))) return { km: 0, nearest: guess }
 
   let best = Infinity
@@ -106,10 +116,11 @@ export function distanceToCountry(country: Country, guess: LatLon) {
 
 export const MAX_SCORE = 5000
 
-// 5000 inside the country, then dropping smoothly: 500 km away still gives
-// about 3900, 2000 km about 1800.
-export function scoreFor(km: number) {
-  return Math.round(MAX_SCORE * Math.exp(-km / 2000))
+// 5000 inside, then dropping smoothly. `scale` sets how forgiving it is:
+// with the countries' 2000 km, 500 km away still gives about 3900 and
+// 2000 km about 1800. States are smaller, so they use a smaller scale.
+export function scoreFor(km: number, scale = 2000) {
+  return Math.round(MAX_SCORE * Math.exp(-km / scale))
 }
 
 // Points along the great circle between two places, lifted off the surface

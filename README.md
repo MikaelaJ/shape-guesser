@@ -1,6 +1,6 @@
 # Shape Guesser
 
-A small geo mini-game on a 3D globe: you get the outline of a country, find it on the globe and drop a pin. The closer you are, the more points. Five rounds, a daily challenge that's the same for everyone, and a shareable result.
+A small geo mini-game on a 3D globe: you get the outline of a country (or a US state), find it on the globe and drop a pin. The closer you are, the more points. Five rounds, a daily challenge that's the same for everyone, and a shareable result.
 
 **Play:** https://mikaelajohansson.com/shape-guesser/
 
@@ -8,12 +8,12 @@ Built by [Mikaela Johansson](https://mikaelajohansson.com) as a focused, finishe
 
 ## How it plays
 
-1. A country's silhouette appears, shown on its own projection so the shape isn't stretched and its position gives nothing away.
+1. Choose **Countries** or **US states**. A silhouette appears, shown on its own projection so the shape isn't stretched and its position gives nothing away.
 2. Spin and zoom the globe (drag, scroll, pinch, the + and − buttons, or the keyboard) and drop a pin where you think it is.
 3. An arc flies from your pin to the answer, the country lights up, and the distance and points count up.
 4. After five rounds you get your total and a row of 🟩🟨🟥 to share.
 
-**Scoring:** a pin inside the country is a perfect 5 000. Outside, distance is measured to the country's **nearest border, not its centre**. Measuring to the centre would punish a click just inside Russia's border for being thousands of kilometres from its middle. Points then fall off smoothly: `5000 × e^(−km / 2000)`, so 500 km away gives about 3 900 and 2 000 km about 1 800.
+**Scoring:** a pin inside the country is a perfect 5 000. Outside, distance is measured to the country's **nearest border, not its centre**. Measuring to the centre would punish a click just inside Russia's border for being thousands of kilometres from its middle. Points then fall off smoothly: `5000 × e^(−km / 2000)`, so 500 km away gives about 3 900 and 2 000 km about 1 800. States are much smaller, so they use 500 km instead of 2 000: 100 km off still gives about 4 100.
 
 ## Accessibility
 
@@ -35,13 +35,14 @@ What it doesn't do: the game is about recognising a *visual* shape, so it isn't 
 - **Three.js via react-three-fiber** (and drei for the fat animated line)
 - **d3-geo** for projections, distances, point-in-country tests and great-circle arcs
 - **Country borders:** [Natural Earth](https://www.naturalearthdata.com/) 1:50m (public domain), via the [world-atlas](https://github.com/topojson/world-atlas) package
+- **US states:** US Census Bureau boundaries (public domain), via the [us-atlas](https://github.com/topojson/us-atlas) package. The 50 states, without DC and the overseas territories
 
 ### How it fits together
 
 | File | What it does |
 | --- | --- |
-| `src/geo.ts` | Country data, lat/lon ↔ 3D conversion, distance to nearest border, scoring, arcs |
-| `src/game.ts` | Seeded random picks for the daily challenge (no backend needed), share squares |
+| `src/geo.ts` | Country and state data, lat/lon ↔ 3D conversion, distance to nearest border, scoring, arcs |
+| `src/game.ts` | The two modes (countries, US states), seeded random picks for the daily challenge (no backend needed), share squares |
 | `src/view.ts` | The camera model, and picking: which point on the globe is under the pointer |
 | `src/Globe.tsx` | The 3D scene: textured globe, highlight, fresnel atmosphere, markers, animated arc |
 | `src/App.tsx` | Game flow, keyboard and pointer input, announcements, focus management |
@@ -54,7 +55,9 @@ Some decisions worth explaining:
 - **The globe texture is drawn once** from the GeoJSON onto a canvas with d3-geo's equirectangular projection, which maps directly onto a three.js sphere: 8192 px wide where the graphics card and screen allow, 4096 on phones. The answer highlight is a second, transparent texture drawn per round.
 - **Borders are real 3D lines, not part of the texture.** Painted into the image they got thick and blurry when zoomed in; as line geometry the GPU draws them 1 px wide at any zoom. The globe surface uses a small polygon offset so the lines just above it don't flicker.
 - **Zoom is proportional:** each step multiplies the camera's height above the surface, so it feels the same far out and close in. Pins shrink as you zoom so they don't cover small countries.
-- **The daily challenge** uses a seeded random number generator keyed on the date, so everyone gets the same five countries without a server.
+- **The daily challenge** uses a seeded random number generator keyed on the date, so everyone gets the same five countries without a server. US states have their own seed (the date plus `:states`); countries kept the plain date, so adding states didn't change that day's challenge.
+- **Modes are data, not branches in the code:** each mode is an entry in `modes` (its places, the word to use, score scale and where the camera starts). Another set, like Swedish counties, would be one more entry.
+- **State lines are drawn once:** topojson's `mesh` gives only the lines between neighbouring states, so shared borders aren't drawn twice and coastlines come from the country data.
 - **Disputed areas** that the data draws as separate shapes (Western Sahara, Somaliland, Northern Cyprus) are shown on the map but never asked about, so the game doesn't take a side.
 
 ## What I'd do next
@@ -87,4 +90,4 @@ Then open http://localhost:5173/shape-guesser/. `pnpm build` makes a static buil
 
 ## Credits
 
-Country borders: Natural Earth, public domain. Not affiliated with GeoGuessr.
+Country borders: Natural Earth, public domain. US states: US Census Bureau, public domain. Not affiliated with GeoGuessr.
