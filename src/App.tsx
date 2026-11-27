@@ -34,7 +34,8 @@ import {
 } from './geo'
 import { Globe } from './Globe'
 import { useCountUp, useReducedMotion, useStoredBoolean } from './hooks'
-import { Silhouette } from './Silhouette'
+import Silhouette from './Silhouette.svelte'
+import { SvelteInReact } from './SvelteInReact'
 import { music } from './music'
 import { sounds } from './sound'
 import {
@@ -557,7 +558,7 @@ export default function App() {
             <p className="eyebrow">
               Round {round + 1} / {ROUNDS} · {points(total)} points
             </p>
-            <Silhouette country={current} />
+            <SvelteInReact component={Silhouette} props={{ country: current }} />
             <p className="prompt">Where is this?</p>
             {timerOn && (
               <div className="clock" aria-hidden="true">
