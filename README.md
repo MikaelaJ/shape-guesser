@@ -37,27 +37,33 @@ What it doesn't do: the game is about recognising a *visual* shape, so it isn't 
 
 ## Tech
 
-- **Vite + React + TypeScript**
-- **Three.js via react-three-fiber** (and drei for the fat animated line)
+- **Vite + Svelte 5 + TypeScript**, in runes mode. The first version was React with react-three-fiber; it was ported to Svelte step by step, with the tests below checking that the game behaves the same
+- **Three.js**, used directly: the scene is a handful of objects kept in sync from Svelte effects. The animated arc is three.js's own fat line (`Line2`)
 - **d3-geo** for projections, distances, point-in-country tests and great-circle arcs
 - **Country borders:** [Natural Earth](https://www.naturalearthdata.com/) 1:50m (public domain), via the [world-atlas](https://github.com/topojson/world-atlas) package
 - **Population:** [Wikidata](https://www.wikidata.org) (CC0), fetched by `scripts/fetch-population.mjs` into `src/data/population.json`. Each clue shows the year of its figure, since Wikidata's newest number varies by country (from 2017 to this year)
 - **Lakes:** Natural Earth 1:50m lakes (public domain), the 110 larger than 1 500 km², fetched by `scripts/fetch-lakes.mjs` into `src/data/lakes.json`
 - **US states:** US Census Bureau boundaries (public domain), via the [us-atlas](https://github.com/topojson/us-atlas) package. The 50 states, without DC and the overseas territories
+- **Vitest** for the geo maths, scoring, the daily picks and picking on the globe
 
 ### How it fits together
+
+The `.ts` files are plain TypeScript with no Svelte in them, so the game's logic can be tested without a browser. The `.svelte` files handle input, display and the scene.
 
 | File | What it does |
 | --- | --- |
 | `src/geo.ts` | Country and state data, lat/lon ↔ 3D conversion, distance to nearest border, scoring, arcs |
 | `src/game.ts` | Round timing, clue times and speed bonus, seeded random picks for the daily challenge (no backend needed), share squares |
 | `src/view.ts` | The camera model, and picking: which point on the globe is under the pointer |
-| `src/Globe.tsx` | The 3D scene: textured globe, highlight, fresnel atmosphere, markers, animated arc |
-| `src/App.tsx` | Game flow, keyboard and pointer input, announcements, focus management |
+| `src/scene.ts` | The parts of the 3D scene as plain three.js: globe texture, highlight, border lines, fresnel atmosphere, arc |
 | `src/facts.ts` | Clues: population (from Wikidata) and a hand-written part of the world for every country and state |
+| `src/App.svelte` | Game flow, keyboard and pointer input, announcements, focus management |
+| `src/Globe.svelte` | The renderer and frame loop, and keeping the scene in sync with the game: pins, highlight, arc |
+| `src/Silhouette.svelte` | The country outline, on an azimuthal equal-area projection centred on it |
+| `src/RevealPanel.svelte`, `src/SummaryPanel.svelte` | The result after each round, and the score at the end |
+| `src/*.test.ts` | Tests for the files above |
 | `scripts/fetch-lakes.mjs` | Fetches the big lakes from Natural Earth |
 | `scripts/fetch-population.mjs` | Fetches the latest population of every country and state from Wikidata |
-| `src/Silhouette.tsx` | The country outline, on an azimuthal equal-area projection centred on it |
 
 Some decisions worth explaining:
 
@@ -69,6 +75,7 @@ Some decisions worth explaining:
 - **One clock for both timer settings.** A clue isn't free: asking for it moves the round's clock forward to when it would have appeared. That's what keeps "take every clue straight away" from being the best strategy, and lets the timer-off mode share the same scoring.
 - **Population is fetched at build time, not in the browser.** A script asks Wikidata's query service for every population figure and keeps the newest per place; the result is committed. The game stays fast and keeps working if Wikidata is down, and `pnpm data:population` refreshes it. Places are matched by code, not name (ISO 3166-1 numeric for countries, [P299](https://www.wikidata.org/wiki/Property:P299); FIPS for states, [P5087](https://www.wikidata.org/wiki/Property:P5087)), so Sweden is 752, [Q34](https://www.wikidata.org/wiki/Q34). One exception is set by hand: ISO 528 belongs to the Kingdom of the Netherlands, but the map shape is the country in Europe ([Q55](https://www.wikidata.org/wiki/Q55)).
 - **The daily challenge** uses a seeded random number generator keyed on the date, so everyone gets the same five countries without a server.
+- **Only countries over about 30 000 km² are asked,** so Belgium is the smallest. Smaller ones are still on the map.
 - **Countries and states are one pool of shapes.** The only differences are the score scale and the name: states are shown as "Georgia, USA", so Georgia the state can't be confused with Georgia the country. Another set, like Swedish counties, would just be added to the pool.
 - **State lines are drawn once:** topojson's `mesh` gives only the lines between neighbouring states, so shared borders aren't drawn twice and coastlines come from the country data.
 - **Lakes are drawn on top of the land.** The country shapes include lakes as land, so without them the Great Lakes were missing and Michigan, Wisconsin, Ohio and New York had no lake shores. The lakes are painted back as water and get shorelines like the coasts. Scoring still uses the country shapes, so a pin in Lake Michigan counts as the US.
@@ -78,11 +85,9 @@ Some decisions worth explaining:
 
 ## What I'd do next
 
-
 - A small backend for a daily leaderboard (a serverless function and a tiny database)
 - Difficulty levels, e.g. continents first, small countries later
-- Load the map data separately to shrink the initial bundle (it's most of the 575 kB gzipped)
-- Tests for the geo maths (distance to border, picking)
+- Load the map data separately to shrink the initial bundle (it's most of the 536 kB gzipped)
 
 ## How I used AI
 
@@ -93,17 +98,22 @@ Some decisions worth explaining:
        didn't fire reliably, so picking was rewritten as plain ray-sphere
        maths that's easier to verify)
      - which parts you can explain line by line
+     - the port from React to Svelte: tests first, then one component at a
+       time behind a temporary bridge, each step tried in the browser
      GeoGuessr say they want people who can evaluate what AI produces, so
      this is worth being specific and honest about. -->
 
 ## Run it locally
 
+Needs Node 24 (see `.nvmrc`).
+
 ```sh
+nvm use
 pnpm install
 pnpm dev
 ```
 
-Then open http://localhost:5173/outlinr/. `pnpm build` makes a static build in `dist/`.
+Then open http://localhost:5173/outlinr/. `pnpm test` runs the tests, `pnpm check` type-checks the Svelte files, and `pnpm build` type-checks everything and makes a static build in `dist/`.
 
 ## Credits
 
