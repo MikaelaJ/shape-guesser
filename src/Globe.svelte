@@ -50,8 +50,8 @@
 
   const markerGeometry = new THREE.SphereGeometry(0.014, 24, 24)
 
-  // Things that run every frame, like useFrame in react-three-fiber. The
-  // effects below add to it and remove themselves when they're cleaned up.
+  // Things that run every frame, before each render. The effects below
+  // add to it and remove themselves when they're cleaned up.
   const onFrame = new Set<(delta: number) => void>()
   // Fat lines need the canvas size to know how wide a pixel is
   const size = new THREE.Vector2(1, 1)
@@ -69,7 +69,8 @@
       alpha: true,
       powerPreference: 'high-performance',
     })
-    // react-three-fiber turned this on by default; kept so colours match
+    // The colours were tuned with this on (react-three-fiber's default,
+    // which the first version used)
     renderer.toneMapping = THREE.ACESFilmicToneMapping
     renderer.setPixelRatio(Math.min(Math.max(window.devicePixelRatio, 1), 2))
     element.appendChild(renderer.domElement)

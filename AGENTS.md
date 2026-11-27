@@ -45,8 +45,8 @@ Write runes-mode Svelte 5. Never use legacy syntax:
 
 ## 2. Keep the logic framework-free
 <!-- Targets: game logic leaking into components, untestable code -->
-`geo.ts`, `game.ts`, `view.ts`, `facts.ts`, `sound.ts` and `music.ts` are
-plain TypeScript with no Svelte imports. Scoring, distances, picking, timing
+`geo.ts`, `game.ts`, `view.ts`, `scene.ts`, `facts.ts`, `result.ts`,
+`sound.ts` and `music.ts` are plain TypeScript with no Svelte imports. Scoring, distances, picking, timing
 and seeded picks belong there, with tests. Components handle input, display
 and the scene.
 
