@@ -1,5 +1,5 @@
-// Shared settings for the globe, kept out of Globe.tsx so that file only
-// exports components (which keeps hot reloading working while developing).
+// Shared settings for the globe: colours, the camera model and picking.
+// Plain TypeScript, so it can be tested without a browser.
 import { PerspectiveCamera, Raycaster, Sphere, Vector2, Vector3 } from 'three'
 import { toLatLon, toVector, type LatLon } from './geo'
 
@@ -15,8 +15,8 @@ export const colors = {
 // The camera orbits the globe; the globe itself never rotates, so a point
 // clicked on its surface converts straight to latitude/longitude.
 // `lat/lon/dist` is where the camera is now, `target*` where it's heading.
-// It's a plain mutable object in a ref on purpose: it changes every frame,
-// and putting it in React state would re-render the app 60 times a second.
+// It's a plain mutable object on purpose, not $state: it changes every
+// frame, and the globe reads it in its animation loop anyway.
 export type View = {
   lat: number
   lon: number
