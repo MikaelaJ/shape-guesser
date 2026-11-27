@@ -28,6 +28,7 @@ jobs:
 
       # Stop before uploading if anything is broken
       - run: pnpm lint
+      - run: pnpm test
       - run: pnpm build
 
       - name: Install lftp

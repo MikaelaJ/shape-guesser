@@ -9,7 +9,9 @@
     "lint": "oxlint",
     "preview": "vite preview",
     "data:population": "node scripts/fetch-population.mjs",
-    "data:lakes": "node scripts/fetch-lakes.mjs"
+    "data:lakes": "node scripts/fetch-lakes.mjs",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.9",
@@ -34,6 +36,7 @@
     "@vitejs/plugin-react": "^6.1.2",
     "oxlint": "^1.89.0",
     "typescript": "~7.0.2",
-    "vite": "^8.3.5"
+    "vite": "^8.3.5",
+    "vitest": "^5.1.2"
   }
 }
