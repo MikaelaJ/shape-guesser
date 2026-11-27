@@ -19,10 +19,12 @@ jobs:
         with:
           version: 10
 
+      # No dependency cache: this job holds the SFTP password and uploads
+      # to the live site, and setup-node advises against caching in jobs
+      # with secrets (a tampered cache could change what's built)
       - uses: actions/setup-node@v7
         with:
           node-version: 24
-          cache: pnpm
 
       - run: pnpm install --frozen-lockfile
 
