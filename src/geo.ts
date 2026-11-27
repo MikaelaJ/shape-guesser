@@ -82,7 +82,9 @@ export const countries = redrawRussia(
 )
 
 // Countries big enough to guess from their outline. geoArea is in
-// steradians: 0.0008 is roughly 32 000 km2, about the size of Belgium.
+// steradians, the area on a globe with radius 1: multiply by the Earth's
+// radius squared for km2. 0.00075 is about 30 400 km2, just below Belgium,
+// so Belgium is the smallest country asked.
 // Left out, though they still appear on the map:
 // - Antarctica and Kaliningrad (see above)
 // - disputed areas the data draws as separate shapes, so the game doesn't
@@ -101,7 +103,7 @@ const notAsked = new Set([
   'Ukraine',
 ])
 export const playableCountries = countries.filter(
-  (c) => !notAsked.has(c.properties.name) && geoArea(c) > 0.0008,
+  (c) => !notAsked.has(c.properties.name) && geoArea(c) > 0.00075,
 )
 
 // The map data abbreviates some names to fit on printed maps

@@ -44,9 +44,9 @@ describe('pickPlaces', () => {
     expect(pickPlaces('2026-01-01').map(placeName)).toEqual([
       'Burkina Faso',
       'Botswana',
-      'Netherlands',
+      'Nepal',
       'Tennessee, USA',
-      'Madagascar',
+      'Lithuania',
     ])
   })
 })

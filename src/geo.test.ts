@@ -153,14 +153,14 @@ describe('the pool of places', () => {
     }
   })
 
-  // The limit works out at about 32 400 km2: Moldova (33 100) is in,
-  // Guinea-Bissau (32 000) and Belgium (30 600) are out
+  // The limit is about 30 400 km2: Belgium (30 600) is the smallest
+  // country asked, Lesotho (30 000) is just below
   it('leaves out countries smaller than the size limit, keeps big ones', () => {
     const asked = new Set(playableCountries.map((c) => c.properties.name))
     expect(asked.has('Luxembourg')).toBe(false)
-    expect(asked.has('Belgium')).toBe(false)
-    expect(asked.has('Guinea-Bissau')).toBe(false)
-    expect(asked.has('Moldova')).toBe(true)
+    expect(asked.has('Lesotho')).toBe(false)
+    expect(asked.has('Belgium')).toBe(true)
+    expect(asked.has('Guinea-Bissau')).toBe(true)
     expect(asked.has('Sweden')).toBe(true)
   })
 })
