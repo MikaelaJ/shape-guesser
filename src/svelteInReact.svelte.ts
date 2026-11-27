@@ -4,27 +4,38 @@
 // without remounting it (the globe would lose its scene every render).
 import { mount, unmount, type Component } from 'svelte'
 
+// One piece of reactive state. $state.raw, not $state: the props include
+// GeoJSON places, which $state would wrap in deep proxies (see AGENTS.md §1).
+function signal<T>(initial: T) {
+  let value = $state.raw(initial)
+  return {
+    get: () => value,
+    set: (next: T) => {
+      value = next
+    },
+  }
+}
+
 export function mountWithProps<P extends Record<string, unknown>>(
   component: Component<P>,
   target: Element,
   initial: P,
 ) {
-  // $state.raw, not $state: the props include GeoJSON places, which $state
-  // would wrap in deep proxies (see AGENTS.md §1). Reassigning `current`
-  // is what updates the component.
-  let current = $state.raw(initial)
+  // One signal per prop, so a prop only counts as changed when its own
+  // value does. React passes all props again on every render; with a
+  // single shared signal, every effect reading any prop would rerun.
+  const keys = Object.keys(initial) as (keyof P)[]
+  const signals = new Map(keys.map((key) => [key, signal(initial[key])]))
 
-  // Each prop is a getter that reads `current`, so the component re-reads
-  // it whenever `current` is replaced
   const props = {} as P
-  for (const key of Object.keys(initial)) {
-    Object.defineProperty(props, key, { get: () => current[key], enumerable: true })
+  for (const key of keys) {
+    Object.defineProperty(props, key, { get: () => signals.get(key)!.get(), enumerable: true })
   }
 
   const instance = mount(component, { target, props })
   return {
     update(next: P) {
-      current = next
+      for (const key of keys) signals.get(key)!.set(next[key])
     },
     destroy() {
       unmount(instance)

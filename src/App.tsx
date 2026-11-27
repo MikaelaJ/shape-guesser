@@ -32,7 +32,7 @@ import {
   type Place,
   type LatLon,
 } from './geo'
-import { Globe } from './Globe'
+import Globe from './Globe.svelte'
 import { useCountUp, useReducedMotion, useStoredBoolean } from './hooks'
 import Silhouette from './Silhouette.svelte'
 import { SvelteInReact } from './SvelteInReact'
@@ -484,11 +484,14 @@ export default function App() {
         onPointerDown={onGlobePointerDown}
         onWheel={onGlobeWheel}
       >
-        <Globe
-          view={view}
-          reducedMotion={reducedMotion}
-          pin={phase === 'guessing' || phase === 'reveal' ? pin : null}
-          reveal={reveal}
+        <SvelteInReact
+          component={Globe}
+          props={{
+            view: view.current,
+            reducedMotion,
+            pin: phase === 'guessing' || phase === 'reveal' ? pin : null,
+            reveal,
+          }}
         />
         {phase === 'guessing' && <div className="crosshair" aria-hidden="true" />}
       </div>

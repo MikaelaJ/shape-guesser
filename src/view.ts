@@ -62,3 +62,8 @@ export function pickOnGlobe(view: View, x: number, y: number, width: number, hei
   const hit = raycaster.ray.intersectSphere(globe, new Vector3())
   return hit ? (toLatLon(hit) as LatLon) : null
 }
+
+// Shortest way round: going from 170° to -170° should be 20°, not 340°
+export function lonDelta(from: number, to: number) {
+  return ((((to - from) % 360) + 540) % 360) - 180
+}

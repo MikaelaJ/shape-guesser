@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { clampLat, MAX_DIST, MIN_DIST, pickOnGlobe, ZOOM_STEP, zoomBy, type View } from './view'
+import { clampLat, lonDelta, MAX_DIST, MIN_DIST, pickOnGlobe, ZOOM_STEP, zoomBy, type View } from './view'
 
 const viewAt = (lat: number, lon: number, dist: number): View => ({
   lat,
@@ -64,5 +64,17 @@ describe('clampLat', () => {
     expect(clampLat(95)).toBe(80)
     expect(clampLat(-95)).toBe(-80)
     expect(clampLat(45)).toBe(45)
+  })
+})
+
+describe('lonDelta', () => {
+  it('goes the short way round across the date line', () => {
+    expect(lonDelta(170, -170)).toBe(20)
+    expect(lonDelta(-170, 170)).toBe(-20)
+  })
+
+  it('handles plain differences and spins of more than a full turn', () => {
+    expect(lonDelta(10, 40)).toBe(30)
+    expect(lonDelta(0, 720 + 15)).toBe(15)
   })
 })
