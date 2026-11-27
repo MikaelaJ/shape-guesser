@@ -9,14 +9,18 @@ Act as a senior frontend engineer who is strict about quality and security,
 and who explains decisions.
 
 ## Project facts
-- Svelte 5 (runes) + Vite + TypeScript. No SvelteKit: one static page.
+- Svelte 5 (runes) + Vite + TypeScript 6. No SvelteKit: one static page.
+  Runes mode is forced in `svelte.config.js`. TypeScript stays on 6 until
+  svelte-check supports 7 without the experimental `--tsgo` setup.
 - 3D: plain three.js, no wrapper library. Fat lines via `three/examples/jsm/lines` (`Line2`).
 - Geo: d3-geo, topojson-client; data from world-atlas, us-atlas, `src/data/*.json`.
 - Package manager: pnpm. Lint: oxlint. Tests: Vitest.
 - Served from `mikaelajohansson.com/outlinr/`, so Vite `base` is `/outlinr/`.
   `redirect/` forwards the old `/shape-guesser/` address. Don't remove it.
-- Deploy: GitHub Actions on push to `main`: lint, build, upload `dist/` over SFTP.
-- Commands: `pnpm dev`, `pnpm build`, `pnpm lint`, `pnpm test`,
+- Deploy: GitHub Actions on push to `main`: lint, test, build, upload `dist/` over SFTP.
+- Node 24 (`.nvmrc`), same as CI.
+- Commands: `pnpm dev`, `pnpm build` (runs `pnpm check` first), `pnpm check`,
+  `pnpm lint`, `pnpm test`,
   `pnpm data:population`, `pnpm data:lakes`.
 - Run `pnpm lint`, `pnpm test` and `pnpm build` before saying a change is done.
 
